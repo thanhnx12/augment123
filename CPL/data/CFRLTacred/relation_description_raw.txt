@@ -1,0 +1,41 @@
+0	organization founded	an organization was found in a date
+1	organization subsidiaries	an organization 's subsidiary is an organization
+2	person date of birth	a person was born in a date
+3	organization city of headquarters	an organization is located in a city
+4	person age	a person 's age is a number
+5	person charges	a person was charged with an event
+6	person countries of residence	a person is living in a country
+7	person country of birth	a person was born in a country
+8	person stateorprovinces of residence	a person is living in a state or province
+9	organization website	an organization 's website is an url
+10	person cities of residence	a person is living in a city
+11	person parents	a person 's parent is a person
+12	person employee of	a person is an employee of an organization
+13	person city of birth	a person was born in a city
+14	organization parents	an organization 's parent is an organization
+15	organization political religious affiliation	an organization is the member of a religion
+16	person schools attended	a person 's school is an organization
+17	person country of death	a person was died in a country
+18	person children	a person 's children is a person
+19	organization top members employees	an organization 's employer is a person
+20	person date of death	a person was died on a date
+21	organization members	an organization 's member is an organization
+22	organization alternate names	a person 's alias is a person
+23	person religion	an person is the member of a religion
+24	organization member of	an organization is the member of an organization
+25	person cause of death	a person was died of an event
+26	person origin	a person 's nationality is a country
+27	organization shareholders	an organization was invested by a person
+28	person stateorprovince of birth	a person was died in a state or province
+29	person title	a person 's title is a title
+30	organization number of employees members	the number of an organization 's employees is a number
+31	organization dissolved	an organization was dissolved in a date
+32	organization country of headquarters	an organization is located in a country
+33	person alternate names	a person 's alias is a person
+34	person siblings	a person 's sibling is a person
+35	organization stateorprovince of headquarters	an organization is located in a state or province
+36	person spouse	a person 's spouse is a person
+37	person other family	a person 's relative is a person
+38	person city of death	a person was died in a city
+39	person stateorprovince of death	a person was died in a state or province
+40	organization founded by	an organization was found by a person
