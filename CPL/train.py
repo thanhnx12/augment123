@@ -279,7 +279,7 @@ class Manager(object):
                 
                 loss = self.moment.contrastive_loss(hidden, labels, is_memory)
                 # print("Losses: ", loss, loss2, loss3, loss4, simcse_loss)
-                loss = loss  
+                loss = loss
                 # + loss3 + 0.5*loss4
                 
                 optimizer.zero_grad()
@@ -319,18 +319,18 @@ class Manager(object):
                 label_second = [temp[1] for temp in labels]
                 
                 mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
-                # n = len(label_first)
-                # m = len(label_second)
-                # new_matrix_labels = np.zeros((n, m), dtype=float)
+                n = len(label_first)
+                m = len(label_second)
+                new_matrix_labels = np.zeros((n, m), dtype=float)
 
-                # # Fill the matrix according to the label comparison
-                # for i1 in range(n):
-                #     for j in range(m):
-                #         if label_first[i1] == label_second[j]:
-                #             new_matrix_labels[i1][j] = 1.0
+                # Fill the matrix according to the label comparison
+                for i1 in range(n):
+                    for j in range(m):
+                        if label_first[i1] == label_second[j]:
+                            new_matrix_labels[i1][j] = 1.0
 
-                # new_matrix_labels_tensor = torch.tensor(new_matrix_labels).to(config.device)
-                # loss1 = loss_retrieval(mask_hidden_1, mask_hidden_2, new_matrix_labels_tensor)
+                new_matrix_labels_tensor = torch.tensor(new_matrix_labels).to(config.device)
+                loss1 = loss_retrieval(mask_hidden_1, mask_hidden_2, new_matrix_labels_tensor)
                 
                 # mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
                 
@@ -354,11 +354,12 @@ class Manager(object):
                     print('something wrong')
                     continue
                 loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
-                
+                loss = loss*0.5 + loss1
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+                self.moment.update(ind, mask_hidden_1.detach().cpu().data, is_memory=True)
                 # print
                 sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
                 sys.stdout.flush() 

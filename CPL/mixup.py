@@ -1,20 +1,42 @@
 import random
 import numpy as np
 from itertools import combinations
-
+from collections import defaultdict
 random.seed(42)
 
 
+# def mixup_data_augmentation(sample_list, sep_token_id=102, pad_token_id=0, max_len=512):
+#     mixed_samples = []
+    
+#     # Iterate over all possible pairs of samples
+#     for sample1, sample2 in combinations(sample_list, 2):
+#         # Only mix if relations are different
+#         if sample1['relation'] != sample2['relation']:
+#             mixed_sample = mixup_samples(sample1, sample2, sep_token_id, pad_token_id, max_len)
+#             if mixed_sample is not None:
+#                 mixed_samples.append(mixed_sample)
+    
+#     return mixed_samples
+
+
 def mixup_data_augmentation(sample_list, sep_token_id=102, pad_token_id=0, max_len=512):
+    # random shuffle the sample_list
+    random.shuffle(sample_list)
     mixed_samples = []
+    sample_count = defaultdict(int)
     
     # Iterate over all possible pairs of samples
     for sample1, sample2 in combinations(sample_list, 2):
-        # Only mix if relations are different
-        if sample1['relation'] != sample2['relation']:
+        # Only mix if relations are different and both samples have been used less than 2 times
+        if (sample1['relation'] != sample2['relation'] and 
+            sample_count[id(sample1)] < 4 and 
+            sample_count[id(sample2)] < 4):
+            
             mixed_sample = mixup_samples(sample1, sample2, sep_token_id, pad_token_id, max_len)
             if mixed_sample is not None:
                 mixed_samples.append(mixed_sample)
+                sample_count[id(sample1)] += 1
+                sample_count[id(sample2)] += 1
     
     return mixed_samples
 
