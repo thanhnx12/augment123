@@ -947,3 +947,28 @@ class SupervisedSimCSELoss(nn.Module):
         
         loss = -torch.log(pos_sum / all_sum)
         return loss.mean()
+    
+class MutualInformationLoss(nn.Module):
+    def __init__(self, temperature: float = 0.05):
+        super().__init__()
+        self.temperature = temperature
+        
+    def forward(self, x_bert, x_stella, labels):
+            mask = labels.unsqueeze(1) == labels.unsqueeze(0)  # Shape: (batch_size, batch_size)
+            mask = mask.to(x_bert.device)
+            x_bert = F.normalize(x_bert, p=2, dim=1)
+            x_stella = F.normalize(x_stella, p=2, dim=1)
+            
+            similarity_matrix = torch.matmul(x_bert, x_stella.t()) / self.temperature # Shape: (batch_size, batch_size)
+
+            f_pos = torch.diag(similarity_matrix)  # Shape: (batch_size,)
+            f_neg = similarity_matrix*(~mask)
+            f_concat = torch.cat([f_pos.unsqueeze(1), f_neg], dim=1)  # Shape: (batch_size, 1 + num_negatives)
+
+            # f_concat = torch.log(torch.clamp(f_concat, min=1e-9).to(device))
+
+            softmax_probs = torch.nn.functional.softmax(f_concat, dim=1)
+
+            infoNCE_loss = -torch.log(softmax_probs[:, 0]).mean()
+
+            return infoNCE_loss

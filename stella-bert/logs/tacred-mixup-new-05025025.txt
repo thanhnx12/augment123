@@ -1,0 +1,371 @@
+#############params############
+cuda:0
+Task=Tacred, 5-shot
+Encoding model: bert
+pattern=hybridprompt
+mem=1, margin=0.3, gen=1, gen_num=2
+#############params############
+--------Round  0
+seed:  100
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/train.pkl
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/valid.pkl
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/test.pkl
+Task_order: [7 3 0 5 4 1 6 2]
+prepared data!
+CurrentTrain: epoch  0, batch     0 | loss: 13.3724613CurrentTrain: epoch  0, batch     1 | loss: 13.1578608CurrentTrain: epoch  0, batch     2 | loss: 13.0914288CurrentTrain: epoch  0, batch     3 | loss: 12.9665594CurrentTrain: epoch  0, batch     4 | loss: 12.8442793CurrentTrain: epoch  0, batch     5 | loss: 12.5822926CurrentTrain: epoch  0, batch     6 | loss: 12.5752811CurrentTrain: epoch  0, batch     7 | loss: 12.3465538CurrentTrain: epoch  0, batch     8 | loss: 12.2965069CurrentTrain: epoch  0, batch     9 | loss: 12.1475677CurrentTrain: epoch  0, batch    10 | loss: 12.0400219CurrentTrain: epoch  0, batch    11 | loss: 11.9480858CurrentTrain: epoch  0, batch    12 | loss: 12.0638752CurrentTrain: epoch  0, batch    13 | loss: 11.8167038CurrentTrain: epoch  0, batch    14 | loss: 11.6889286CurrentTrain: epoch  0, batch    15 | loss: 11.6254883CurrentTrain: epoch  0, batch    16 | loss: 11.0940533CurrentTrain: epoch  0, batch    17 | loss: 11.2020321CurrentTrain: epoch  0, batch    18 | loss: 11.2489090CurrentTrain: epoch  0, batch    19 | loss: 11.4948883CurrentTrain: epoch  0, batch    20 | loss: 11.0849552CurrentTrain: epoch  0, batch    21 | loss: 11.3767891CurrentTrain: epoch  0, batch    22 | loss: 11.4738388CurrentTrain: epoch  0, batch    23 | loss: 11.0327606CurrentTrain: epoch  0, batch    24 | loss: 11.3491087CurrentTrain: epoch  0, batch    25 | loss: 11.3099518CurrentTrain: epoch  0, batch    26 | loss: 10.8578224CurrentTrain: epoch  0, batch    27 | loss: 10.2841034CurrentTrain: epoch  0, batch    28 | loss: 10.7051201CurrentTrain: epoch  0, batch    29 | loss: 10.7940836CurrentTrain: epoch  0, batch    30 | loss: 10.4195404CurrentTrain: epoch  0, batch    31 | loss: 10.7609634CurrentTrain: epoch  0, batch    32 | loss: 10.3042355CurrentTrain: epoch  0, batch    33 | loss: 10.3129387CurrentTrain: epoch  0, batch    34 | loss: 10.0250797CurrentTrain: epoch  0, batch    35 | loss: 10.2144766CurrentTrain: epoch  0, batch    36 | loss: 10.2306309CurrentTrain: epoch  0, batch    37 | loss: 10.0852337CurrentTrain: epoch  1, batch     0 | loss: 10.2014656CurrentTrain: epoch  1, batch     1 | loss: 10.6530342CurrentTrain: epoch  1, batch     2 | loss: 9.7890358CurrentTrain: epoch  1, batch     3 | loss: 9.7257767CurrentTrain: epoch  1, batch     4 | loss: 9.4564104CurrentTrain: epoch  1, batch     5 | loss: 10.1626291CurrentTrain: epoch  1, batch     6 | loss: 9.8237648CurrentTrain: epoch  1, batch     7 | loss: 9.4988441CurrentTrain: epoch  1, batch     8 | loss: 9.4991245CurrentTrain: epoch  1, batch     9 | loss: 9.6452885CurrentTrain: epoch  1, batch    10 | loss: 9.9743004CurrentTrain: epoch  1, batch    11 | loss: 9.7963219CurrentTrain: epoch  1, batch    12 | loss: 9.6937313CurrentTrain: epoch  1, batch    13 | loss: 9.1966829CurrentTrain: epoch  1, batch    14 | loss: 9.5502548CurrentTrain: epoch  1, batch    15 | loss: 9.2058496CurrentTrain: epoch  1, batch    16 | loss: 9.1888971CurrentTrain: epoch  1, batch    17 | loss: 9.5938950CurrentTrain: epoch  1, batch    18 | loss: 9.4860392CurrentTrain: epoch  1, batch    19 | loss: 9.5833225CurrentTrain: epoch  1, batch    20 | loss: 9.5087862CurrentTrain: epoch  1, batch    21 | loss: 9.1296339CurrentTrain: epoch  1, batch    22 | loss: 9.2063999CurrentTrain: epoch  1, batch    23 | loss: 9.0002327CurrentTrain: epoch  1, batch    24 | loss: 9.2855091CurrentTrain: epoch  1, batch    25 | loss: 8.4403152CurrentTrain: epoch  1, batch    26 | loss: 9.3554955CurrentTrain: epoch  1, batch    27 | loss: 8.4032183CurrentTrain: epoch  1, batch    28 | loss: 8.6823807CurrentTrain: epoch  1, batch    29 | loss: 8.0479479CurrentTrain: epoch  1, batch    30 | loss: 8.6466703CurrentTrain: epoch  1, batch    31 | loss: 9.0862045CurrentTrain: epoch  1, batch    32 | loss: 8.8169594CurrentTrain: epoch  1, batch    33 | loss: 8.2732611CurrentTrain: epoch  1, batch    34 | loss: 8.6010847CurrentTrain: epoch  1, batch    35 | loss: 8.1362267CurrentTrain: epoch  1, batch    36 | loss: 8.8653030CurrentTrain: epoch  1, batch    37 | loss: 8.5752344CurrentTrain: epoch  2, batch     0 | loss: 7.7833271CurrentTrain: epoch  2, batch     1 | loss: 8.4801159CurrentTrain: epoch  2, batch     2 | loss: 8.7112026CurrentTrain: epoch  2, batch     3 | loss: 8.3481588CurrentTrain: epoch  2, batch     4 | loss: 9.3701601CurrentTrain: epoch  2, batch     5 | loss: 9.5443459CurrentTrain: epoch  2, batch     6 | loss: 8.6426182CurrentTrain: epoch  2, batch     7 | loss: 8.3060379CurrentTrain: epoch  2, batch     8 | loss: 8.6485052CurrentTrain: epoch  2, batch     9 | loss: 8.4162703CurrentTrain: epoch  2, batch    10 | loss: 8.0237541CurrentTrain: epoch  2, batch    11 | loss: 8.5527153CurrentTrain: epoch  2, batch    12 | loss: 8.2105560CurrentTrain: epoch  2, batch    13 | loss: 7.9770279CurrentTrain: epoch  2, batch    14 | loss: 7.3642979CurrentTrain: epoch  2, batch    15 | loss: 7.9607420CurrentTrain: epoch  2, batch    16 | loss: 8.3288574CurrentTrain: epoch  2, batch    17 | loss: 8.4686508CurrentTrain: epoch  2, batch    18 | loss: 8.0185461CurrentTrain: epoch  2, batch    19 | loss: 7.8661394CurrentTrain: epoch  2, batch    20 | loss: 7.6271992CurrentTrain: epoch  2, batch    21 | loss: 7.9648695CurrentTrain: epoch  2, batch    22 | loss: 7.4678106CurrentTrain: epoch  2, batch    23 | loss: 7.4899635CurrentTrain: epoch  2, batch    24 | loss: 7.8132114CurrentTrain: epoch  2, batch    25 | loss: 8.1924648CurrentTrain: epoch  2, batch    26 | loss: 7.2895327CurrentTrain: epoch  2, batch    27 | loss: 8.5118685CurrentTrain: epoch  2, batch    28 | loss: 6.8255653CurrentTrain: epoch  2, batch    29 | loss: 7.8991265CurrentTrain: epoch  2, batch    30 | loss: 7.5748453CurrentTrain: epoch  2, batch    31 | loss: 7.1347771CurrentTrain: epoch  2, batch    32 | loss: 7.6812344CurrentTrain: epoch  2, batch    33 | loss: 7.5430918CurrentTrain: epoch  2, batch    34 | loss: 8.4325619CurrentTrain: epoch  2, batch    35 | loss: 7.4143143CurrentTrain: epoch  2, batch    36 | loss: 7.8018699CurrentTrain: epoch  2, batch    37 | loss: 7.7435017CurrentTrain: epoch  3, batch     0 | loss: 7.5232515CurrentTrain: epoch  3, batch     1 | loss: 7.8361187CurrentTrain: epoch  3, batch     2 | loss: 7.8839965CurrentTrain: epoch  3, batch     3 | loss: 7.9287844CurrentTrain: epoch  3, batch     4 | loss: 7.4654551CurrentTrain: epoch  3, batch     5 | loss: 7.8325772CurrentTrain: epoch  3, batch     6 | loss: 8.4771061CurrentTrain: epoch  3, batch     7 | loss: 6.9571447CurrentTrain: epoch  3, batch     8 | loss: 8.0827675CurrentTrain: epoch  3, batch     9 | loss: 7.7508407CurrentTrain: epoch  3, batch    10 | loss: 7.0086536CurrentTrain: epoch  3, batch    11 | loss: 6.6070518CurrentTrain: epoch  3, batch    12 | loss: 7.7624445CurrentTrain: epoch  3, batch    13 | loss: 8.1287346CurrentTrain: epoch  3, batch    14 | loss: 7.2786741CurrentTrain: epoch  3, batch    15 | loss: 7.4686642CurrentTrain: epoch  3, batch    16 | loss: 8.3591795CurrentTrain: epoch  3, batch    17 | loss: 7.4006367CurrentTrain: epoch  3, batch    18 | loss: 7.4785576CurrentTrain: epoch  3, batch    19 | loss: 7.9789510CurrentTrain: epoch  3, batch    20 | loss: 7.5735807CurrentTrain: epoch  3, batch    21 | loss: 7.4664931CurrentTrain: epoch  3, batch    22 | loss: 7.6469474CurrentTrain: epoch  3, batch    23 | loss: 7.7438240CurrentTrain: epoch  3, batch    24 | loss: 6.4601979CurrentTrain: epoch  3, batch    25 | loss: 6.9148345CurrentTrain: epoch  3, batch    26 | loss: 6.8151793CurrentTrain: epoch  3, batch    27 | loss: 7.9257421CurrentTrain: epoch  3, batch    28 | loss: 7.3877330CurrentTrain: epoch  3, batch    29 | loss: 6.2554440CurrentTrain: epoch  3, batch    30 | loss: 7.2944155CurrentTrain: epoch  3, batch    31 | loss: 6.9774604CurrentTrain: epoch  3, batch    32 | loss: 6.2400208CurrentTrain: epoch  3, batch    33 | loss: 6.4645548CurrentTrain: epoch  3, batch    34 | loss: 6.7722120CurrentTrain: epoch  3, batch    35 | loss: 6.4985266CurrentTrain: epoch  3, batch    36 | loss: 6.8035321CurrentTrain: epoch  3, batch    37 | loss: 6.8702993CurrentTrain: epoch  4, batch     0 | loss: 7.0334969CurrentTrain: epoch  4, batch     1 | loss: 7.0049124CurrentTrain: epoch  4, batch     2 | loss: 5.8247557CurrentTrain: epoch  4, batch     3 | loss: 6.8830619CurrentTrain: epoch  4, batch     4 | loss: 6.9699078CurrentTrain: epoch  4, batch     5 | loss: 6.9527235CurrentTrain: epoch  4, batch     6 | loss: 6.2295132CurrentTrain: epoch  4, batch     7 | loss: 6.9355526CurrentTrain: epoch  4, batch     8 | loss: 7.7385564CurrentTrain: epoch  4, batch     9 | loss: 7.0533419CurrentTrain: epoch  4, batch    10 | loss: 7.2315435CurrentTrain: epoch  4, batch    11 | loss: 6.2178564CurrentTrain: epoch  4, batch    12 | loss: 6.9987230CurrentTrain: epoch  4, batch    13 | loss: 6.5305729CurrentTrain: epoch  4, batch    14 | loss: 6.8219061CurrentTrain: epoch  4, batch    15 | loss: 7.0248032CurrentTrain: epoch  4, batch    16 | loss: 6.7223358CurrentTrain: epoch  4, batch    17 | loss: 6.6297302CurrentTrain: epoch  4, batch    18 | loss: 6.2468553CurrentTrain: epoch  4, batch    19 | loss: 6.3774834CurrentTrain: epoch  4, batch    20 | loss: 6.7463589CurrentTrain: epoch  4, batch    21 | loss: 7.4178104CurrentTrain: epoch  4, batch    22 | loss: 6.9252653CurrentTrain: epoch  4, batch    23 | loss: 6.1513681CurrentTrain: epoch  4, batch    24 | loss: 7.1817818CurrentTrain: epoch  4, batch    25 | loss: 7.3936548CurrentTrain: epoch  4, batch    26 | loss: 6.3802161CurrentTrain: epoch  4, batch    27 | loss: 8.6171103CurrentTrain: epoch  4, batch    28 | loss: 6.6908755CurrentTrain: epoch  4, batch    29 | loss: 6.6532860CurrentTrain: epoch  4, batch    30 | loss: 6.7164712CurrentTrain: epoch  4, batch    31 | loss: 6.5105209CurrentTrain: epoch  4, batch    32 | loss: 7.6631536CurrentTrain: epoch  4, batch    33 | loss: 6.2924786CurrentTrain: epoch  4, batch    34 | loss: 7.8369579CurrentTrain: epoch  4, batch    35 | loss: 7.2543831CurrentTrain: epoch  4, batch    36 | loss: 6.5398402CurrentTrain: epoch  4, batch    37 | loss: 7.5059304CurrentTrain: epoch  5, batch     0 | loss: 6.1030679CurrentTrain: epoch  5, batch     1 | loss: 6.8386374CurrentTrain: epoch  5, batch     2 | loss: 7.0808506CurrentTrain: epoch  5, batch     3 | loss: 7.1512556CurrentTrain: epoch  5, batch     4 | loss: 6.9177895CurrentTrain: epoch  5, batch     5 | loss: 6.7688484CurrentTrain: epoch  5, batch     6 | loss: 6.7772846CurrentTrain: epoch  5, batch     7 | loss: 6.8151073CurrentTrain: epoch  5, batch     8 | loss: 6.7718267CurrentTrain: epoch  5, batch     9 | loss: 6.6284990CurrentTrain: epoch  5, batch    10 | loss: 6.2529025CurrentTrain: epoch  5, batch    11 | loss: 6.5486612CurrentTrain: epoch  5, batch    12 | loss: 6.1802988CurrentTrain: epoch  5, batch    13 | loss: 6.8904743CurrentTrain: epoch  5, batch    14 | loss: 6.4440236CurrentTrain: epoch  5, batch    15 | loss: 6.5432043CurrentTrain: epoch  5, batch    16 | loss: 5.7127781CurrentTrain: epoch  5, batch    17 | loss: 5.8208084CurrentTrain: epoch  5, batch    18 | loss: 7.2228193CurrentTrain: epoch  5, batch    19 | loss: 6.8538017CurrentTrain: epoch  5, batch    20 | loss: 6.0343790CurrentTrain: epoch  5, batch    21 | loss: 6.0485401CurrentTrain: epoch  5, batch    22 | loss: 6.1135545CurrentTrain: epoch  5, batch    23 | loss: 5.8876462CurrentTrain: epoch  5, batch    24 | loss: 6.7454958CurrentTrain: epoch  5, batch    25 | loss: 5.8460865CurrentTrain: epoch  5, batch    26 | loss: 5.9473586CurrentTrain: epoch  5, batch    27 | loss: 6.7466745CurrentTrain: epoch  5, batch    28 | loss: 8.3776693CurrentTrain: epoch  5, batch    29 | loss: 6.3754187CurrentTrain: epoch  5, batch    30 | loss: 6.4071417CurrentTrain: epoch  5, batch    31 | loss: 6.0694742CurrentTrain: epoch  5, batch    32 | loss: 5.5056829CurrentTrain: epoch  5, batch    33 | loss: 6.3093948CurrentTrain: epoch  5, batch    34 | loss: 6.6475391CurrentTrain: epoch  5, batch    35 | loss: 5.9693222CurrentTrain: epoch  5, batch    36 | loss: 6.5377998CurrentTrain: epoch  5, batch    37 | loss: 6.0111084CurrentTrain: epoch  6, batch     0 | loss: 6.0047464CurrentTrain: epoch  6, batch     1 | loss: 6.6310277CurrentTrain: epoch  6, batch     2 | loss: 6.6020212CurrentTrain: epoch  6, batch     3 | loss: 6.2475824CurrentTrain: epoch  6, batch     4 | loss: 6.0720997CurrentTrain: epoch  6, batch     5 | loss: 6.0006638CurrentTrain: epoch  6, batch     6 | loss: 6.3973942CurrentTrain: epoch  6, batch     7 | loss: 5.9961662CurrentTrain: epoch  6, batch     8 | loss: 5.7649665CurrentTrain: epoch  6, batch     9 | loss: 6.0096731CurrentTrain: epoch  6, batch    10 | loss: 5.9515557CurrentTrain: epoch  6, batch    11 | loss: 5.9529152CurrentTrain: epoch  6, batch    12 | loss: 5.9199295CurrentTrain: epoch  6, batch    13 | loss: 5.6818867CurrentTrain: epoch  6, batch    14 | loss: 5.8865380CurrentTrain: epoch  6, batch    15 | loss: 5.3489008CurrentTrain: epoch  6, batch    16 | loss: 6.4938850CurrentTrain: epoch  6, batch    17 | loss: 5.9322629CurrentTrain: epoch  6, batch    18 | loss: 6.0616775CurrentTrain: epoch  6, batch    19 | loss: 5.8435102CurrentTrain: epoch  6, batch    20 | loss: 6.5467153CurrentTrain: epoch  6, batch    21 | loss: 6.8287182CurrentTrain: epoch  6, batch    22 | loss: 5.8638916CurrentTrain: epoch  6, batch    23 | loss: 5.8143373CurrentTrain: epoch  6, batch    24 | loss: 5.5679169CurrentTrain: epoch  6, batch    25 | loss: 6.4695663CurrentTrain: epoch  6, batch    26 | loss: 6.4372053CurrentTrain: epoch  6, batch    27 | loss: 5.6673498CurrentTrain: epoch  6, batch    28 | loss: 5.9043579CurrentTrain: epoch  6, batch    29 | loss: 6.1868839CurrentTrain: epoch  6, batch    30 | loss: 6.6498880CurrentTrain: epoch  6, batch    31 | loss: 6.2947693CurrentTrain: epoch  6, batch    32 | loss: 5.6921754CurrentTrain: epoch  6, batch    33 | loss: 6.2850089CurrentTrain: epoch  6, batch    34 | loss: 5.9845924CurrentTrain: epoch  6, batch    35 | loss: 6.4355583CurrentTrain: epoch  6, batch    36 | loss: 6.2763124CurrentTrain: epoch  6, batch    37 | loss: 5.9351416CurrentTrain: epoch  7, batch     0 | loss: 6.6529021CurrentTrain: epoch  7, batch     1 | loss: 5.8108978CurrentTrain: epoch  7, batch     2 | loss: 5.5417938CurrentTrain: epoch  7, batch     3 | loss: 5.5101213CurrentTrain: epoch  7, batch     4 | loss: 6.3973951CurrentTrain: epoch  7, batch     5 | loss: 5.6384888CurrentTrain: epoch  7, batch     6 | loss: 5.6699238CurrentTrain: epoch  7, batch     7 | loss: 5.6597505CurrentTrain: epoch  7, batch     8 | loss: 5.6804357CurrentTrain: epoch  7, batch     9 | loss: 5.5073752CurrentTrain: epoch  7, batch    10 | loss: 5.9107246CurrentTrain: epoch  7, batch    11 | loss: 5.8943958CurrentTrain: epoch  7, batch    12 | loss: 5.7086897CurrentTrain: epoch  7, batch    13 | loss: 5.8933516CurrentTrain: epoch  7, batch    14 | loss: 5.8622904CurrentTrain: epoch  7, batch    15 | loss: 6.0675993CurrentTrain: epoch  7, batch    16 | loss: 5.7433643CurrentTrain: epoch  7, batch    17 | loss: 5.4421778CurrentTrain: epoch  7, batch    18 | loss: 5.6944370CurrentTrain: epoch  7, batch    19 | loss: 5.5842218CurrentTrain: epoch  7, batch    20 | loss: 5.5729561CurrentTrain: epoch  7, batch    21 | loss: 5.3309689CurrentTrain: epoch  7, batch    22 | loss: 6.9911366CurrentTrain: epoch  7, batch    23 | loss: 6.2403383CurrentTrain: epoch  7, batch    24 | loss: 6.1066108CurrentTrain: epoch  7, batch    25 | loss: 5.3430290CurrentTrain: epoch  7, batch    26 | loss: 5.5711193CurrentTrain: epoch  7, batch    27 | loss: 5.4540119CurrentTrain: epoch  7, batch    28 | loss: 5.4332466CurrentTrain: epoch  7, batch    29 | loss: 5.3174152CurrentTrain: epoch  7, batch    30 | loss: 5.4019990CurrentTrain: epoch  7, batch    31 | loss: 5.3367624CurrentTrain: epoch  7, batch    32 | loss: 5.6065183CurrentTrain: epoch  7, batch    33 | loss: 5.8639040CurrentTrain: epoch  7, batch    34 | loss: 5.5942111CurrentTrain: epoch  7, batch    35 | loss: 5.7962923CurrentTrain: epoch  7, batch    36 | loss: 5.5112915CurrentTrain: epoch  7, batch    37 | loss: 4.9952893CurrentTrain: epoch  8, batch     0 | loss: 5.4854412CurrentTrain: epoch  8, batch     1 | loss: 5.6333909CurrentTrain: epoch  8, batch     2 | loss: 5.1421604CurrentTrain: epoch  8, batch     3 | loss: 5.3651385CurrentTrain: epoch  8, batch     4 | loss: 5.3226509CurrentTrain: epoch  8, batch     5 | loss: 5.3203096CurrentTrain: epoch  8, batch     6 | loss: 5.3517303CurrentTrain: epoch  8, batch     7 | loss: 5.4473085CurrentTrain: epoch  8, batch     8 | loss: 5.3135548CurrentTrain: epoch  8, batch     9 | loss: 5.2105174CurrentTrain: epoch  8, batch    10 | loss: 5.6048307CurrentTrain: epoch  8, batch    11 | loss: 5.3615904CurrentTrain: epoch  8, batch    12 | loss: 5.7865286CurrentTrain: epoch  8, batch    13 | loss: 5.3026810CurrentTrain: epoch  8, batch    14 | loss: 5.6099992CurrentTrain: epoch  8, batch    15 | loss: 5.3994226CurrentTrain: epoch  8, batch    16 | loss: 5.7551336CurrentTrain: epoch  8, batch    17 | loss: 5.0666037CurrentTrain: epoch  8, batch    18 | loss: 5.2056007CurrentTrain: epoch  8, batch    19 | loss: 5.7251682CurrentTrain: epoch  8, batch    20 | loss: 5.5557652CurrentTrain: epoch  8, batch    21 | loss: 5.4007759CurrentTrain: epoch  8, batch    22 | loss: 5.9072752CurrentTrain: epoch  8, batch    23 | loss: 5.6366529CurrentTrain: epoch  8, batch    24 | loss: 5.2677555CurrentTrain: epoch  8, batch    25 | loss: 5.3671660CurrentTrain: epoch  8, batch    26 | loss: 6.1590004CurrentTrain: epoch  8, batch    27 | loss: 5.1991730CurrentTrain: epoch  8, batch    28 | loss: 5.2172470CurrentTrain: epoch  8, batch    29 | loss: 5.6280775CurrentTrain: epoch  8, batch    30 | loss: 5.2850456CurrentTrain: epoch  8, batch    31 | loss: 5.3826280CurrentTrain: epoch  8, batch    32 | loss: 4.9245048CurrentTrain: epoch  8, batch    33 | loss: 5.1530337CurrentTrain: epoch  8, batch    34 | loss: 5.0754180CurrentTrain: epoch  8, batch    35 | loss: 5.2098951CurrentTrain: epoch  8, batch    36 | loss: 5.0569038CurrentTrain: epoch  8, batch    37 | loss: 5.1459870CurrentTrain: epoch  9, batch     0 | loss: 5.3714628CurrentTrain: epoch  9, batch     1 | loss: 5.2017689CurrentTrain: epoch  9, batch     2 | loss: 5.2213621CurrentTrain: epoch  9, batch     3 | loss: 5.0896473CurrentTrain: epoch  9, batch     4 | loss: 5.1074209CurrentTrain: epoch  9, batch     5 | loss: 5.1780319CurrentTrain: epoch  9, batch     6 | loss: 5.4686308CurrentTrain: epoch  9, batch     7 | loss: 5.1841688CurrentTrain: epoch  9, batch     8 | loss: 5.1631765CurrentTrain: epoch  9, batch     9 | loss: 5.0416660CurrentTrain: epoch  9, batch    10 | loss: 5.0971518CurrentTrain: epoch  9, batch    11 | loss: 5.0610533CurrentTrain: epoch  9, batch    12 | loss: 5.1421871CurrentTrain: epoch  9, batch    13 | loss: 5.2279015CurrentTrain: epoch  9, batch    14 | loss: 5.3229456CurrentTrain: epoch  9, batch    15 | loss: 5.0906010CurrentTrain: epoch  9, batch    16 | loss: 5.0985069CurrentTrain: epoch  9, batch    17 | loss: 5.8242164CurrentTrain: epoch  9, batch    18 | loss: 5.5273147CurrentTrain: epoch  9, batch    19 | loss: 5.1797643CurrentTrain: epoch  9, batch    20 | loss: 5.3398924CurrentTrain: epoch  9, batch    21 | loss: 4.9716997CurrentTrain: epoch  9, batch    22 | loss: 5.1110754CurrentTrain: epoch  9, batch    23 | loss: 5.2672491CurrentTrain: epoch  9, batch    24 | loss: 5.1435614CurrentTrain: epoch  9, batch    25 | loss: 5.7747397CurrentTrain: epoch  9, batch    26 | loss: 5.6257625CurrentTrain: epoch  9, batch    27 | loss: 5.3424568CurrentTrain: epoch  9, batch    28 | loss: 5.0072770CurrentTrain: epoch  9, batch    29 | loss: 5.5512266CurrentTrain: epoch  9, batch    30 | loss: 4.9825134CurrentTrain: epoch  9, batch    31 | loss: 5.0399342CurrentTrain: epoch  9, batch    32 | loss: 5.1282659CurrentTrain: epoch  9, batch    33 | loss: 5.3177009CurrentTrain: epoch  9, batch    34 | loss: 5.1026111CurrentTrain: epoch  9, batch    35 | loss: 4.9330521CurrentTrain: epoch  9, batch    36 | loss: 4.9632597CurrentTrain: epoch  9, batch    37 | loss: 5.1368017
+#### person countries of residence ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person countries of residence" means a person is living in a country.
+Here is an example:
+Relation: person countries of residence
+Context: khamenei , 67 , has final say on all state matters in iran as supreme leader , a post he has held since 1989 .
+Head Entity: khamenei
+Tail Entity: iran
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person countries of residence":
+Relation: person countries of residence  
+Context: After years of living in the United States, Maria decided to return to her homeland, spain, where she felt a deep connection to her roots.  
+Head Entity: Maria  
+Tail Entity: spain  
+
+Relation: person countries of residence  
+Context: Following his successful career in the tech industry, Raj moved to canada to enjoy a quieter life surrounded by nature.  
+Head Entity: Raj  
+Tail Entity: canada  
+#### organization top members employees ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization top members employees" means an organization 's employer is a person.
+Here is an example:
+Relation: organization top members employees
+Context: kao charng , vice chairman of the cabinet-level mainland affairs council -lrb- mac -rrb- , explained that the termination clause was added to give both sides an option after the implementation of the tariff-cutting economic cooperation framework agreement -lrb- ecfa -rrb- .
+Head Entity: mainland affairs council
+Tail Entity: kao charng
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization top members employees":
+Relation: organization top members employees  
+Context: elon musk, the CEO of spacex, announced the successful launch of the latest satellite into orbit, marking another milestone for the company.  
+Head Entity: spacex  
+Tail Entity: elon musk  
+
+Relation: organization top members employees  
+Context: sheryl sandberg, the chief operating officer of facebook, spoke at the conference about the importance of leadership in the tech industry.  
+Head Entity: facebook  
+Tail Entity: sheryl sandberg  
+#### organization member of ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization member of" means an organization is the member of an organization.
+Here is an example:
+Relation: organization member of
+Context: south africa 1-5 leyds cnr biccard streets cosatu 's concern has been that the scorpions ' existence as a branch of the national directorate of public prosecutions blurred the necessary separation of functions between those investigating crime and those prosecuting the criminals .
+Head Entity: scorpions
+Tail Entity: national directorate of public prosecutions
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization member of":
+Relation: organization member of  
+Context: The International Federation of Red Cross and Red Crescent Societies (IFRC) is a global humanitarian organization that coordinates the activities of national Red Cross and Red Crescent societies around the world.  
+Head Entity: International Federation of Red Cross and Red Crescent Societies  
+Tail Entity: national Red Cross and Red Crescent societies  
+
+Relation: organization member of  
+Context: The European Union (EU) is a political and economic union of member states that are located primarily in Europe, working together to promote peace and stability in the region.  
+Head Entity: European Union  
+Tail Entity: member states  
+#### person origin ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person origin" means a person 's nationality is a country.
+Here is an example:
+Relation: person origin
+Context: iranian nuclear negotiator ali larijani said thursday in ankara that talks on settling the iranian nuclear crisis had made some progress towards a `` united view . ''
+Head Entity: ali larijani
+Tail Entity: iranian
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person origin":
+Relation: person origin  
+Context: The famous physicist Albert Einstein was born in the Kingdom of Württemberg in the German Empire, which is now part of modern-day Germany.  
+Head Entity: Albert Einstein  
+Tail Entity: German  
+
+Relation: person origin  
+Context: The renowned author Chimamanda Ngozi Adichie often speaks about her Nigerian heritage and how it influences her writing.  
+Head Entity: Chimamanda Ngozi Adichie  
+Tail Entity: Nigerian  
+#### person title ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person title" means a person 's title is a title.
+Here is an example:
+Relation: person title
+Context: `` it has to have some tempo , it has to have some energy , '' said sean ross , vice president of music and programming at edison media research , which surveys the radio industry .
+Head Entity: sean ross
+Tail Entity: vice president
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person title":
+Relation: person title  
+Context: "After years of hard work and dedication, Maria Lopez was promoted to Chief Financial Officer at Tech Innovations, where she now oversees all financial operations."  
+Head Entity: Maria Lopez  
+Tail Entity: Chief Financial Officer  
+
+Relation: person title  
+Context: "During the annual conference, Dr. James Smith, the lead researcher at the National Institute of Health, presented his findings on the latest advancements in medical technology."  
+Head Entity: Dr. James Smith  
+Tail Entity: lead researcher  
+#### organization country of headquarters ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization country of headquarters" means an organization is located in a country.
+Here is an example:
+Relation: organization country of headquarters
+Context: the credit crisis spread to the largest us bond insurer thursday , sending shares of mbia inc plunging and calling into question the safety of tens of billions of dollars of company and local government debt held by investors .
+Head Entity: mbia
+Tail Entity: us
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization country of headquarters":
+Relation: organization country of headquarters  
+Context: after years of rapid expansion, the tech giant apple inc announced plans to open a new campus in cupertino, california, which will serve as its global headquarters.  
+Head Entity: apple  
+Tail Entity: california  
+
+Relation: organization country of headquarters  
+Context: the multinational corporation samsung electronics has established its main office in suwon, south korea, where it oversees operations across various countries.  
+Head Entity: samsung  
+Tail Entity: south korea  
+[EVAL] batch:    0 | acc: 81.25%,  total acc: 81.25%   [EVAL] batch:    1 | acc: 75.00%,  total acc: 78.12%   [EVAL] batch:    2 | acc: 87.50%,  total acc: 81.25%   [EVAL] batch:    3 | acc: 62.50%,  total acc: 76.56%   [EVAL] batch:    4 | acc: 81.25%,  total acc: 77.50%   [EVAL] batch:    5 | acc: 68.75%,  total acc: 76.04%   [EVAL] batch:    6 | acc: 93.75%,  total acc: 78.57%   [EVAL] batch:    7 | acc: 100.00%,  total acc: 81.25%   [EVAL] batch:    8 | acc: 93.75%,  total acc: 82.64%   [EVAL] batch:    9 | acc: 93.75%,  total acc: 83.75%   [EVAL] batch:   10 | acc: 100.00%,  total acc: 85.23%   [EVAL] batch:   11 | acc: 93.75%,  total acc: 85.94%   [EVAL] batch:   12 | acc: 93.75%,  total acc: 86.54%   [EVAL] batch:   13 | acc: 68.75%,  total acc: 85.27%   [EVAL] batch:   14 | acc: 75.00%,  total acc: 84.58%   [EVAL] batch:   15 | acc: 62.50%,  total acc: 83.20%   [EVAL] batch:   16 | acc: 75.00%,  total acc: 82.72%   [EVAL] batch:   17 | acc: 62.50%,  total acc: 81.60%   [EVAL] batch:   18 | acc: 81.25%,  total acc: 81.58%   [EVAL] batch:   19 | acc: 81.25%,  total acc: 81.56%   [EVAL] batch:   20 | acc: 100.00%,  total acc: 82.44%   [EVAL] batch:   21 | acc: 100.00%,  total acc: 83.24%   [EVAL] batch:   22 | acc: 100.00%,  total acc: 83.97%   [EVAL] batch:   23 | acc: 100.00%,  total acc: 84.64%   [EVAL] batch:   24 | acc: 100.00%,  total acc: 85.25%   [EVAL] batch:   25 | acc: 100.00%,  total acc: 85.82%   [EVAL] batch:   26 | acc: 93.75%,  total acc: 86.11%   [EVAL] batch:   27 | acc: 100.00%,  total acc: 86.61%   [EVAL] batch:   28 | acc: 100.00%,  total acc: 87.07%   [EVAL] batch:   29 | acc: 81.25%,  total acc: 86.88%   [EVAL] batch:   30 | acc: 87.50%,  total acc: 86.90%   [EVAL] batch:   31 | acc: 93.75%,  total acc: 87.11%   [EVAL] batch:   32 | acc: 37.50%,  total acc: 85.61%   
+[EVAL] batch:    0 | acc: 81.25%,  total acc: 81.25%   [EVAL] batch:    1 | acc: 75.00%,  total acc: 78.12%   [EVAL] batch:    2 | acc: 87.50%,  total acc: 81.25%   [EVAL] batch:    3 | acc: 62.50%,  total acc: 76.56%   [EVAL] batch:    4 | acc: 81.25%,  total acc: 77.50%   [EVAL] batch:    5 | acc: 68.75%,  total acc: 76.04%   [EVAL] batch:    6 | acc: 93.75%,  total acc: 78.57%   [EVAL] batch:    7 | acc: 100.00%,  total acc: 81.25%   [EVAL] batch:    8 | acc: 93.75%,  total acc: 82.64%   [EVAL] batch:    9 | acc: 93.75%,  total acc: 83.75%   [EVAL] batch:   10 | acc: 100.00%,  total acc: 85.23%   [EVAL] batch:   11 | acc: 93.75%,  total acc: 85.94%   [EVAL] batch:   12 | acc: 93.75%,  total acc: 86.54%   [EVAL] batch:   13 | acc: 68.75%,  total acc: 85.27%   [EVAL] batch:   14 | acc: 75.00%,  total acc: 84.58%   [EVAL] batch:   15 | acc: 62.50%,  total acc: 83.20%   [EVAL] batch:   16 | acc: 75.00%,  total acc: 82.72%   [EVAL] batch:   17 | acc: 62.50%,  total acc: 81.60%   [EVAL] batch:   18 | acc: 81.25%,  total acc: 81.58%   [EVAL] batch:   19 | acc: 81.25%,  total acc: 81.56%   [EVAL] batch:   20 | acc: 100.00%,  total acc: 82.44%   [EVAL] batch:   21 | acc: 100.00%,  total acc: 83.24%   [EVAL] batch:   22 | acc: 100.00%,  total acc: 83.97%   [EVAL] batch:   23 | acc: 100.00%,  total acc: 84.64%   [EVAL] batch:   24 | acc: 100.00%,  total acc: 85.25%   [EVAL] batch:   25 | acc: 100.00%,  total acc: 85.82%   [EVAL] batch:   26 | acc: 93.75%,  total acc: 86.11%   [EVAL] batch:   27 | acc: 100.00%,  total acc: 86.61%   [EVAL] batch:   28 | acc: 100.00%,  total acc: 87.07%   [EVAL] batch:   29 | acc: 81.25%,  total acc: 86.88%   [EVAL] batch:   30 | acc: 87.50%,  total acc: 86.90%   [EVAL] batch:   31 | acc: 93.75%,  total acc: 87.11%   [EVAL] batch:   32 | acc: 37.50%,  total acc: 85.61%   
+cur_acc:  ['0.8561']
+his_acc:  ['0.8561']
+CurrentTrain: epoch  0, batch     0 | loss: 6.7105479CurrentTrain: epoch  0, batch     1 | loss: 7.8216114CurrentTrain: epoch  1, batch     0 | loss: 6.5109053CurrentTrain: epoch  1, batch     1 | loss: 5.2046876CurrentTrain: epoch  2, batch     0 | loss: 5.8193226CurrentTrain: epoch  2, batch     1 | loss: 5.3728476CurrentTrain: epoch  3, batch     0 | loss: 5.3471889CurrentTrain: epoch  3, batch     1 | loss: 4.4202156CurrentTrain: epoch  4, batch     0 | loss: 4.8331256CurrentTrain: epoch  4, batch     1 | loss: 4.8644309CurrentTrain: epoch  5, batch     0 | loss: 4.9063978CurrentTrain: epoch  5, batch     1 | loss: 3.9061246CurrentTrain: epoch  6, batch     0 | loss: 4.2706718CurrentTrain: epoch  6, batch     1 | loss: 3.8399904CurrentTrain: epoch  7, batch     0 | loss: 4.1974335CurrentTrain: epoch  7, batch     1 | loss: 4.0149384CurrentTrain: epoch  8, batch     0 | loss: 3.6917348CurrentTrain: epoch  8, batch     1 | loss: 3.3621042CurrentTrain: epoch  9, batch     0 | loss: 3.4238887CurrentTrain: epoch  9, batch     1 | loss: 3.0295978
+#### person date of birth ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person date of birth" means a person was born in a date.
+Here is an example:
+Relation: person date of birth
+Context: kirkaldy , born irene morgan in baltimore , maryland , in 1917 , was arrested in 1944 for refusing to give up her seat on a greyhound bus heading from gloucester to baltimore , and for resisting arrest .
+Head Entity: irene morgan
+Tail Entity: 1917
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person date of birth":
+Relation: person date of birth  
+Context: the famous physicist albert einstein was born in ulm, in the kingdom of wurttemberg in the german empire, on march 14, 1879.  
+Head Entity: albert einstein  
+Tail Entity: march 14, 1879  
+
+Relation: person date of birth  
+Context: the renowned author jane austen was born on december 16, 1775, in steventon, hampshire, england.  
+Head Entity: jane austen  
+Tail Entity: december 16, 1775  
+#### person stateorprovince of birth ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person stateorprovince of birth" means a person was died in a state or province.
+Here is an example:
+Relation: person stateorprovince of birth
+Context: jane matilda bolin was born on april 11 , 1908 , in poughkeepsie , ny .
+Head Entity: jane matilda bolin
+Tail Entity: ny
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person stateorprovince of birth":
+Relation: person stateorprovince of birth  
+Context: albert einstein was born on march 14, 1879, in ulm, germany.  
+Head Entity: albert einstein  
+Tail Entity: germany  
+
+Relation: person stateorprovince of birth  
+Context: marilyn monroe was born on june 1, 1926, in los angeles, california.  
+Head Entity: marilyn monroe  
+Tail Entity: california  
+#### person parents ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person parents" means a person 's parent is a person.
+Here is an example:
+Relation: person parents
+Context: lynne spears told the court that lutfi had treated her daughter like a hostage in her own home , drugged her and took over her finances .
+Head Entity: her
+Tail Entity: lynne spears
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person parents":
+Sample 1:  
+Relation: person parents  
+Context: During the family reunion, Sarah introduced her father, who had always been her biggest supporter, to her friends.  
+Head Entity: her  
+Tail Entity: father  
+
+Sample 2:  
+Relation: person parents  
+Context: After the ceremony, Michael thanked his mother for all the sacrifices she made to ensure he had a good education.  
+Head Entity: his  
+Tail Entity: mother  
+#### person employee of ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person employee of" means a person is an employee of an organization.
+Here is an example:
+Relation: person employee of
+Context: seeking revenge , axel reunites with old pal sgt. billy rosewood -lrb- judge reinhold -rrb- and jon flint -lrb- hector elizondo -rrb- of the beverly hills police department .
+Head Entity: hector elizondo
+Tail Entity: beverly hills police department
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person employee of":
+Relation: person employee of  
+Context: After years of hard work and dedication, Sarah Thompson finally received a promotion at Tech Innovations, where she has been a key player in the development team.  
+Head Entity: Sarah Thompson  
+Tail Entity: Tech Innovations  
+
+Relation: person employee of  
+Context: John Smith has been with Global Finance for over a decade, where he has climbed the ranks to become the senior analyst in the investment division.  
+Head Entity: John Smith  
+Tail Entity: Global Finance  
+#### person stateorprovince of death ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person stateorprovince of death" means a person was died in a state or province.
+Here is an example:
+Relation: person stateorprovince of death
+Context: irene morgan kirkaldy , 90 , who died of alzheimer 's disease aug. 10 at her home in gloucester , va. , quietly changed history in 1944 when she refused to give up her seat on a crowded greyhound bus to a white couple .
+Head Entity: irene morgan kirkaldy
+Tail Entity: va.
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person stateorprovince of death":
+Relation: person stateorprovince of death  
+Context: john smith, a renowned author, passed away on march 5 in his residence located in los angeles, california, leaving behind a legacy of literary works that inspired many.  
+Head Entity: john smith  
+Tail Entity: california  
+
+Relation: person stateorprovince of death  
+Context: the famous musician, elena rodriguez, died tragically in a car accident on july 12 while traveling through the scenic routes of oregon, where she had spent her childhood.  
+Head Entity: elena rodriguez  
+Tail Entity: oregon  
+Mixup data size:  103
+MixupTrain:  epoch  0, batch     0 | loss: 6.9894694MixupTrain:  epoch  0, batch     1 | loss: 6.3204846MixupTrain:  epoch  0, batch     2 | loss: 6.5481134MixupTrain:  epoch  0, batch     3 | loss: 7.9520242MixupTrain:  epoch  0, batch     4 | loss: 6.4411552MixupTrain:  epoch  0, batch     5 | loss: 6.2009272MixupTrain:  epoch  0, batch     6 | loss: 5.2148590
+MemoryTrain:  epoch  0, batch     0 | loss: 4.4199290MemoryTrain:  epoch  0, batch     1 | loss: 3.5319986MemoryTrain:  epoch  0, batch     2 | loss: 4.5481796MemoryTrain:  epoch  1, batch     0 | loss: 3.8327413MemoryTrain:  epoch  1, batch     1 | loss: 3.3370934MemoryTrain:  epoch  1, batch     2 | loss: 4.3726287MemoryTrain:  epoch  2, batch     0 | loss: 2.8132067MemoryTrain:  epoch  2, batch     1 | loss: 3.4911642MemoryTrain:  epoch  2, batch     2 | loss: 2.7766733MemoryTrain:  epoch  3, batch     0 | loss: 2.8019176MemoryTrain:  epoch  3, batch     1 | loss: 2.7174454MemoryTrain:  epoch  3, batch     2 | loss: 3.3414230MemoryTrain:  epoch  4, batch     0 | loss: 2.4335289MemoryTrain:  epoch  4, batch     1 | loss: 3.0851612MemoryTrain:  epoch  4, batch     2 | loss: 2.4560034MemoryTrain:  epoch  5, batch     0 | loss: 2.8321562MemoryTrain:  epoch  5, batch     1 | loss: 2.3630486MemoryTrain:  epoch  5, batch     2 | loss: 3.4433212MemoryTrain:  epoch  6, batch     0 | loss: 2.3591940MemoryTrain:  epoch  6, batch     1 | loss: 2.7049985MemoryTrain:  epoch  6, batch     2 | loss: 1.3143052MemoryTrain:  epoch  7, batch     0 | loss: 2.3042197MemoryTrain:  epoch  7, batch     1 | loss: 2.5223985MemoryTrain:  epoch  7, batch     2 | loss: 2.2477264MemoryTrain:  epoch  8, batch     0 | loss: 2.0575733MemoryTrain:  epoch  8, batch     1 | loss: 2.1288521MemoryTrain:  epoch  8, batch     2 | loss: 1.2940258MemoryTrain:  epoch  9, batch     0 | loss: 1.9024664MemoryTrain:  epoch  9, batch     1 | loss: 1.9705491MemoryTrain:  epoch  9, batch     2 | loss: 2.3445618
+[EVAL] batch:    0 | acc: 75.00%,  total acc: 75.00%   [EVAL] batch:    1 | acc: 87.50%,  total acc: 81.25%   [EVAL] batch:    2 | acc: 93.75%,  total acc: 85.42%   [EVAL] batch:    3 | acc: 87.50%,  total acc: 85.94%   [EVAL] batch:    4 | acc: 93.75%,  total acc: 87.50%   [EVAL] batch:    5 | acc: 100.00%,  total acc: 89.58%   [EVAL] batch:    6 | acc: 93.75%,  total acc: 90.18%   [EVAL] batch:    7 | acc: 93.75%,  total acc: 90.62%   [EVAL] batch:    8 | acc: 93.75%,  total acc: 90.97%   [EVAL] batch:    9 | acc: 93.75%,  total acc: 91.25%   [EVAL] batch:   10 | acc: 81.25%,  total acc: 90.34%   [EVAL] batch:   11 | acc: 87.50%,  total acc: 90.10%   [EVAL] batch:   12 | acc: 93.75%,  total acc: 90.38%   [EVAL] batch:   13 | acc: 56.25%,  total acc: 87.95%   
+[EVAL] batch:    0 | acc: 68.75%,  total acc: 68.75%   [EVAL] batch:    1 | acc: 68.75%,  total acc: 68.75%   [EVAL] batch:    2 | acc: 75.00%,  total acc: 70.83%   [EVAL] batch:    3 | acc: 62.50%,  total acc: 68.75%   [EVAL] batch:    4 | acc: 43.75%,  total acc: 63.75%   [EVAL] batch:    5 | acc: 56.25%,  total acc: 62.50%   [EVAL] batch:    6 | acc: 93.75%,  total acc: 66.96%   [EVAL] batch:    7 | acc: 100.00%,  total acc: 71.09%   [EVAL] batch:    8 | acc: 100.00%,  total acc: 74.31%   [EVAL] batch:    9 | acc: 93.75%,  total acc: 76.25%   [EVAL] batch:   10 | acc: 100.00%,  total acc: 78.41%   [EVAL] batch:   11 | acc: 87.50%,  total acc: 79.17%   [EVAL] batch:   12 | acc: 93.75%,  total acc: 80.29%   [EVAL] batch:   13 | acc: 75.00%,  total acc: 79.91%   [EVAL] batch:   14 | acc: 75.00%,  total acc: 79.58%   [EVAL] batch:   15 | acc: 56.25%,  total acc: 78.12%   [EVAL] batch:   16 | acc: 75.00%,  total acc: 77.94%   [EVAL] batch:   17 | acc: 62.50%,  total acc: 77.08%   [EVAL] batch:   18 | acc: 87.50%,  total acc: 77.63%   [EVAL] batch:   19 | acc: 87.50%,  total acc: 78.12%   [EVAL] batch:   20 | acc: 100.00%,  total acc: 79.17%   [EVAL] batch:   21 | acc: 100.00%,  total acc: 80.11%   [EVAL] batch:   22 | acc: 100.00%,  total acc: 80.98%   [EVAL] batch:   23 | acc: 100.00%,  total acc: 81.77%   [EVAL] batch:   24 | acc: 100.00%,  total acc: 82.50%   [EVAL] batch:   25 | acc: 100.00%,  total acc: 83.17%   [EVAL] batch:   26 | acc: 93.75%,  total acc: 83.56%   [EVAL] batch:   27 | acc: 100.00%,  total acc: 84.15%   [EVAL] batch:   28 | acc: 100.00%,  total acc: 84.70%   [EVAL] batch:   29 | acc: 87.50%,  total acc: 84.79%   [EVAL] batch:   30 | acc: 100.00%,  total acc: 85.28%   [EVAL] batch:   31 | acc: 93.75%,  total acc: 85.55%   [EVAL] batch:   32 | acc: 93.75%,  total acc: 85.80%   [EVAL] batch:   33 | acc: 68.75%,  total acc: 85.29%   [EVAL] batch:   34 | acc: 100.00%,  total acc: 85.71%   [EVAL] batch:   35 | acc: 87.50%,  total acc: 85.76%   [EVAL] batch:   36 | acc: 87.50%,  total acc: 85.81%   [EVAL] batch:   37 | acc: 100.00%,  total acc: 86.18%   [EVAL] batch:   38 | acc: 100.00%,  total acc: 86.54%   [EVAL] batch:   39 | acc: 87.50%,  total acc: 86.56%   [EVAL] batch:   40 | acc: 100.00%,  total acc: 86.89%   [EVAL] batch:   41 | acc: 93.75%,  total acc: 87.05%   [EVAL] batch:   42 | acc: 87.50%,  total acc: 87.06%   [EVAL] batch:   43 | acc: 81.25%,  total acc: 86.93%   [EVAL] batch:   44 | acc: 87.50%,  total acc: 86.94%   [EVAL] batch:   45 | acc: 87.50%,  total acc: 86.96%   [EVAL] batch:   46 | acc: 6.25%,  total acc: 85.24%   
+cur_acc:  ['0.8561', '0.8795']
+his_acc:  ['0.8561', '0.8524']
+CurrentTrain: epoch  0, batch     0 | loss: 6.0146761CurrentTrain: epoch  0, batch     1 | loss: 7.1554585CurrentTrain: epoch  1, batch     0 | loss: 5.6900005CurrentTrain: epoch  1, batch     1 | loss: 4.9893603CurrentTrain: epoch  2, batch     0 | loss: 5.1524434CurrentTrain: epoch  2, batch     1 | loss: 4.2902441CurrentTrain: epoch  3, batch     0 | loss: 4.2827148CurrentTrain: epoch  3, batch     1 | loss: 4.0044408CurrentTrain: epoch  4, batch     0 | loss: 3.4665008CurrentTrain: epoch  4, batch     1 | loss: 4.4833136CurrentTrain: epoch  5, batch     0 | loss: 3.5282454CurrentTrain: epoch  5, batch     1 | loss: 3.4787636CurrentTrain: epoch  6, batch     0 | loss: 3.5655360CurrentTrain: epoch  6, batch     1 | loss: 3.0797706CurrentTrain: epoch  7, batch     0 | loss: 3.5587678CurrentTrain: epoch  7, batch     1 | loss: 3.2159438CurrentTrain: epoch  8, batch     0 | loss: 2.9886122CurrentTrain: epoch  8, batch     1 | loss: 3.7111681CurrentTrain: epoch  9, batch     0 | loss: 2.6921568CurrentTrain: epoch  9, batch     1 | loss: 3.7109261
+#### person country of birth ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person country of birth" means a person was born in a country.
+Here is an example:
+Relation: person country of birth
+Context: in testimony by satellite link from germany to a house of representatives ' panel , murat kurnaz recounted his five-year detention , alleging a wide range of torture and abuse .
+Head Entity: murat kurnaz
+Tail Entity: germany
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person country of birth":
+Relation: person country of birth  
+Context: During the interview, the renowned artist shared his experiences growing up in the vibrant streets of Barcelona, which greatly influenced his work.  
+Head Entity: the renowned artist  
+Tail Entity: Barcelona  
+
+Relation: person country of birth  
+Context: In her autobiography, the famous actress reflects on her childhood in Mumbai, where she developed her passion for performing arts.  
+Head Entity: the famous actress  
+Tail Entity: Mumbai  
+#### organization website ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization website" means an organization 's website is an url.
+Here is an example:
+Relation: organization website
+Context: http://www.pentaxsailaway.com/ paul j. sail away with pentax sweepstakes
+Head Entity: pentax
+Tail Entity: http://www.pentaxsailaway.com/
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization website":
+Relation: organization website  
+Context: Visit our official site at https://www.techinnovators.com for the latest updates on our projects.  
+Head Entity: Tech Innovators  
+Tail Entity: https://www.techinnovators.com  
+
+Relation: organization website  
+Context: For more information about our services, check out our website at http://www.greenearthsolutions.org.  
+Head Entity: Green Earth Solutions  
+Tail Entity: http://www.greenearthsolutions.org  
+#### organization shareholders ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization shareholders" means an organization was invested by a person.
+Here is an example:
+Relation: organization shareholders
+Context: marsans already owns the madrid-based air comet and 95 percent of aerolineas argentinas .
+Head Entity: aerolineas argentinas
+Tail Entity: marsans
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization shareholders":
+Relation: organization shareholders  
+Context: tech giant apple inc. has recently acquired a significant stake in the innovative startup nextdoor.  
+Head Entity: nextdoor  
+Tail Entity: apple inc.  
+
+Relation: organization shareholders  
+Context: the investment firm blackrock has increased its holdings in the renewable energy company solarcity.  
+Head Entity: solarcity  
+Tail Entity: blackrock  
+#### organization dissolved ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization dissolved" means an organization was dissolved in a date.
+Here is an example:
+Relation: organization dissolved
+Context: the tse suffered its worst-ever system crash in november 2005 which paralyzed the world 's second largest bourse and forced it to shelve plan for a listing of its own .
+Head Entity: tse
+Tail Entity: november 2005
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization dissolved":
+Relation: organization dissolved  
+Context: The once-prominent tech startup, Innovatech, officially ceased operations in March 2020 after struggling to secure funding.  
+Head Entity: Innovatech  
+Tail Entity: March 2020  
+
+Relation: organization dissolved  
+Context: After years of financial difficulties, the local arts council announced its closure in January 2019, marking the end of its community programs.  
+Head Entity: local arts council  
+Tail Entity: January 2019  
+#### organization founded by ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization founded by" means an organization was found by a person.
+Here is an example:
+Relation: organization founded by
+Context: `` i have no greater obligation than to ensure the safely of airline travelers in this country , '' transportation secretary ray lahood said in a joint statement with j. randolph babbitt , administrator of the federal aviation administration , that was issued on the eve of a senate hearing on aviation safety .
+Head Entity: federal aviation administration
+Tail Entity: j. randolph babbitt
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization founded by":
+Relation: organization founded by  
+Context: In 1975, the renowned physicist and entrepreneur, Dr. Jane Smith, established Quantum Innovations, a company dedicated to advancing quantum computing technologies.  
+Head Entity: Quantum Innovations  
+Tail Entity: Dr. Jane Smith  
+
+Relation: organization founded by  
+Context: The charity organization, Hope for Tomorrow, was created in 2010 by the well-known philanthropist, Michael Johnson, to support underprivileged children in urban areas.  
+Head Entity: Hope for Tomorrow  
+Tail Entity: Michael Johnson  
+Mixup data size:  133
+MixupTrain:  epoch  0, batch     0 | loss: 4.4256988MixupTrain:  epoch  0, batch     1 | loss: 4.2046614MixupTrain:  epoch  0, batch     2 | loss: 4.3715641MixupTrain:  epoch  0, batch     3 | loss: 5.9870621MixupTrain:  epoch  0, batch     4 | loss: 4.4319816MixupTrain:  epoch  0, batch     5 | loss: 4.9422321MixupTrain:  epoch  0, batch     6 | loss: 4.8350534MixupTrain:  epoch  0, batch     7 | loss: 4.1011034MixupTrain:  epoch  0, batch     8 | loss: 4.0360184
+MemoryTrain:  epoch  0, batch     0 | loss: 3.9620905MemoryTrain:  epoch  0, batch     1 | loss: 4.0378876MemoryTrain:  epoch  0, batch     2 | loss: 3.2369671MemoryTrain:  epoch  1, batch     0 | loss: 2.9742575MemoryTrain:  epoch  1, batch     1 | loss: 4.2115059MemoryTrain:  epoch  1, batch     2 | loss: 3.5359514MemoryTrain:  epoch  2, batch     0 | loss: 2.9420435MemoryTrain:  epoch  2, batch     1 | loss: 2.6862147MemoryTrain:  epoch  2, batch     2 | loss: 3.4961293MemoryTrain:  epoch  3, batch     0 | loss: 2.7451067MemoryTrain:  epoch  3, batch     1 | loss: 2.6661248MemoryTrain:  epoch  3, batch     2 | loss: 3.2373784MemoryTrain:  epoch  4, batch     0 | loss: 2.2717416MemoryTrain:  epoch  4, batch     1 | loss: 2.7622561MemoryTrain:  epoch  4, batch     2 | loss: 2.9632032MemoryTrain:  epoch  5, batch     0 | loss: 2.5086434MemoryTrain:  epoch  5, batch     1 | loss: 2.7433765MemoryTrain:  epoch  5, batch     2 | loss: 2.6465676MemoryTrain:  epoch  6, batch     0 | loss: 2.5488224MemoryTrain:  epoch  6, batch     1 | loss: 1.9475486MemoryTrain:  epoch  6, batch     2 | loss: 2.4877386MemoryTrain:  epoch  7, batch     0 | loss: 2.5556979MemoryTrain:  epoch  7, batch     1 | loss: 2.0564895MemoryTrain:  epoch  7, batch     2 | loss: 1.7515984MemoryTrain:  epoch  8, batch     0 | loss: 1.8435166MemoryTrain:  epoch  8, batch     1 | loss: 2.0314093MemoryTrain:  epoch  8, batch     2 | loss: 2.1838298MemoryTrain:  epoch  9, batch     0 | loss: 2.1441295MemoryTrain:  epoch  9, batch     1 | loss: 2.1174335MemoryTrain:  epoch  9, batch     2 | loss: 1.9176885
+[EVAL] batch:    0 | acc: 87.50%,  total acc: 87.50%   [EVAL] batch:    1 | acc: 93.75%,  total acc: 90.62%   [EVAL] batch:    2 | acc: 68.75%,  total acc: 83.33%   [EVAL] batch:    3 | acc: 25.00%,  total acc: 68.75%   [EVAL] batch:    4 | acc: 25.00%,  total acc: 60.00%   [EVAL] batch:    5 | acc: 31.25%,  total acc: 55.21%   [EVAL] batch:    6 | acc: 43.75%,  total acc: 53.57%   [EVAL] batch:    7 | acc: 6.25%,  total acc: 47.66%   
+[EVAL] batch:    0 | acc: 31.25%,  total acc: 31.25%   [EVAL] batch:    1 | acc: 37.50%,  total acc: 34.38%   [EVAL] batch:    2 | acc: 56.25%,  total acc: 41.67%   [EVAL] batch:    3 | acc: 12.50%,  total acc: 34.38%   [EVAL] batch:    4 | acc: 18.75%,  total acc: 31.25%   [EVAL] batch:    5 | acc: 31.25%,  total acc: 31.25%   [EVAL] batch:    6 | acc: 75.00%,  total acc: 37.50%   [EVAL] batch:    7 | acc: 75.00%,  total acc: 42.19%   [EVAL] batch:    8 | acc: 81.25%,  total acc: 46.53%   [EVAL] batch:    9 | acc: 75.00%,  total acc: 49.38%   [EVAL] batch:   10 | acc: 81.25%,  total acc: 52.27%   [EVAL] batch:   11 | acc: 75.00%,  total acc: 54.17%   [EVAL] batch:   12 | acc: 56.25%,  total acc: 54.33%   [EVAL] batch:   13 | acc: 37.50%,  total acc: 53.12%   [EVAL] batch:   14 | acc: 75.00%,  total acc: 54.58%   [EVAL] batch:   15 | acc: 56.25%,  total acc: 54.69%   [EVAL] batch:   16 | acc: 75.00%,  total acc: 55.88%   [EVAL] batch:   17 | acc: 62.50%,  total acc: 56.25%   [EVAL] batch:   18 | acc: 75.00%,  total acc: 57.24%   [EVAL] batch:   19 | acc: 81.25%,  total acc: 58.44%   [EVAL] batch:   20 | acc: 100.00%,  total acc: 60.42%   [EVAL] batch:   21 | acc: 100.00%,  total acc: 62.22%   [EVAL] batch:   22 | acc: 100.00%,  total acc: 63.86%   [EVAL] batch:   23 | acc: 100.00%,  total acc: 65.36%   [EVAL] batch:   24 | acc: 93.75%,  total acc: 66.50%   [EVAL] batch:   25 | acc: 100.00%,  total acc: 67.79%   [EVAL] batch:   26 | acc: 93.75%,  total acc: 68.75%   [EVAL] batch:   27 | acc: 100.00%,  total acc: 69.87%   [EVAL] batch:   28 | acc: 100.00%,  total acc: 70.91%   [EVAL] batch:   29 | acc: 93.75%,  total acc: 71.67%   [EVAL] batch:   30 | acc: 100.00%,  total acc: 72.58%   [EVAL] batch:   31 | acc: 93.75%,  total acc: 73.24%   [EVAL] batch:   32 | acc: 93.75%,  total acc: 73.86%   [EVAL] batch:   33 | acc: 75.00%,  total acc: 73.90%   [EVAL] batch:   34 | acc: 93.75%,  total acc: 74.46%   [EVAL] batch:   35 | acc: 87.50%,  total acc: 74.83%   [EVAL] batch:   36 | acc: 81.25%,  total acc: 75.00%   [EVAL] batch:   37 | acc: 100.00%,  total acc: 75.66%   [EVAL] batch:   38 | acc: 93.75%,  total acc: 76.12%   [EVAL] batch:   39 | acc: 87.50%,  total acc: 76.41%   [EVAL] batch:   40 | acc: 100.00%,  total acc: 76.98%   [EVAL] batch:   41 | acc: 100.00%,  total acc: 77.53%   [EVAL] batch:   42 | acc: 87.50%,  total acc: 77.76%   [EVAL] batch:   43 | acc: 87.50%,  total acc: 77.98%   [EVAL] batch:   44 | acc: 93.75%,  total acc: 78.33%   [EVAL] batch:   45 | acc: 56.25%,  total acc: 77.85%   [EVAL] batch:   46 | acc: 81.25%,  total acc: 77.93%   [EVAL] batch:   47 | acc: 100.00%,  total acc: 78.39%   [EVAL] batch:   48 | acc: 62.50%,  total acc: 78.06%   [EVAL] batch:   49 | acc: 25.00%,  total acc: 77.00%   [EVAL] batch:   50 | acc: 31.25%,  total acc: 76.10%   [EVAL] batch:   51 | acc: 31.25%,  total acc: 75.24%   [EVAL] batch:   52 | acc: 43.75%,  total acc: 74.65%   [EVAL] batch:   53 | acc: 6.25%,  total acc: 73.38%   
+cur_acc:  ['0.8561', '0.8795', '0.4766']
+his_acc:  ['0.8561', '0.8524', '0.7338']
+CurrentTrain: epoch  0, batch     0 | loss: 4.9435644CurrentTrain: epoch  0, batch     1 | loss: 5.2497025CurrentTrain: epoch  1, batch     0 | loss: 4.3070040CurrentTrain: epoch  1, batch     1 | loss: 4.0846925CurrentTrain: epoch  2, batch     0 | loss: 3.7035275CurrentTrain: epoch  2, batch     1 | loss: 3.1262021CurrentTrain: epoch  3, batch     0 | loss: 3.5183308CurrentTrain: epoch  3, batch     1 | loss: 2.7873158CurrentTrain: epoch  4, batch     0 | loss: 3.3693991CurrentTrain: epoch  4, batch     1 | loss: 2.8208268CurrentTrain: epoch  5, batch     0 | loss: 3.0409801CurrentTrain: epoch  5, batch     1 | loss: 2.4294786CurrentTrain: epoch  6, batch     0 | loss: 2.4756725CurrentTrain: epoch  6, batch     1 | loss: 2.3921235CurrentTrain: epoch  7, batch     0 | loss: 2.6642103CurrentTrain: epoch  7, batch     1 | loss: 2.3157833CurrentTrain: epoch  8, batch     0 | loss: 2.6071401CurrentTrain: epoch  8, batch     1 | loss: 2.5155237CurrentTrain: epoch  9, batch     0 | loss: 2.1712503CurrentTrain: epoch  9, batch     1 | loss: 2.4604154
+#### person cause of death ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person cause of death" means a person was died of an event.
+Here is an example:
+Relation: person cause of death
+Context: mr scheider had suffered from multiple myeloma for several years , and died of complications from a staph infection , his wife , brenda siemer , said .
+Head Entity: mr scheider
+Tail Entity: complications from a staph infection
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person cause of death":
+Relation: person cause of death  
+Context: after battling with lung cancer for over a year, john doe passed away peacefully in his sleep, surrounded by family.  
+Head Entity: john doe  
+Tail Entity: lung cancer  
+
+Relation: person cause of death  
+Context: the renowned scientist, dr. emily white, tragically lost her life due to a car accident while returning from a conference.  
+Head Entity: dr. emily white  
+Tail Entity: car accident  
+#### organization political religious affiliation ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization political religious affiliation" means an organization is the member of a religion.
+Here is an example:
+Relation: organization political religious affiliation
+Context: the militia has also suffered from allegations of being involved in clashes with rival shiite militias , particularly the badr corp , the military wing linked to supreme iraqi islamic council , the party led by powerful politician abdel aziz al-hakim .
+Head Entity: badr corp
+Tail Entity: shiite
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization political religious affiliation":
+Relation: organization political religious affiliation  
+Context: The Christian Democratic Union has been a significant player in German politics, often aligning itself with various religious groups to promote policies that reflect its Christian values.  
+Head Entity: Christian Democratic Union  
+Tail Entity: Christian  
+
+Relation: organization political religious affiliation  
+Context: The Islamic Society of North America has been actively involved in advocating for Muslim rights and representation in the political landscape of the United States.  
+Head Entity: Islamic Society of North America  
+Tail Entity: Muslim  
+#### organization stateorprovince of headquarters ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "organization stateorprovince of headquarters" means an organization is located in a state or province.
+Here is an example:
+Relation: organization stateorprovince of headquarters
+Context: based in armonk , new york , mbia insures $ 670 billion -lrb- euro452 .18 billion -rrb- in debt .
+Head Entity: mbia
+Tail Entity: new york
+Please generate 2 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "organization stateorprovince of headquarters":

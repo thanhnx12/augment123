@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from data_loader import get_data_loader_BERT
 from nltk import word_tokenize
 from retry import retry
+from together import Together
 
 class Moment:
     def __init__(self, config) -> None:
@@ -20,17 +21,20 @@ class Moment:
         self.temperature = config.contrastive_temp
         self.m = config.margin
     
-    def init_moment(self, encoder, dataset, is_memory=False):
+    def init_moment(self, encoder, dataset, is_memory=False, is_llm=False):
         encoder.eval()
         datalen = len(dataset)
         if not is_memory:
-            self.features = torch.zeros(datalen, self.config.encoder_output_size)
+            self.features = torch.zeros(datalen, self.config.encoder_output_size if not is_llm else self.config.encoder_llm_output_size)
             data_loader = get_data_loader_BERT(self.config, dataset) # shuffle=False
             lbs = []
             for step, (instance, labels, ind) in enumerate(data_loader):
-                for k in instance.keys():
+                for k in ['ids', 'mask']:
                     instance[k] = instance[k].to(self.config.device)
-                hidden = encoder(instance)
+                if is_llm:
+                    hidden = encoder(instance['input'])
+                else:
+                    hidden = encoder(instance)
                 fea = hidden.detach().cpu().data
                 self.update(ind, fea)
                 lbs.append(labels) # shuffle=False
@@ -38,36 +42,46 @@ class Moment:
             self.labels = lbs
         else:
             self.mem_samples = dataset
-            self.mem_features = torch.zeros(datalen, self.config.encoder_output_size)
+            self.mem_features = torch.zeros(datalen, self.config.encoder_output_size if not is_llm else self.config.encoder_llm_output_size)
             data_loader = get_data_loader_BERT(self.config, dataset) # shuffle=False
             lbs = []
             for step, (instance, labels, ind) in enumerate(data_loader):
-                for k in instance.keys():
+                for k in ['ids', 'mask']:
                     instance[k] = instance[k].to(self.config.device)
-                hidden = encoder(instance)
+                if is_llm:
+                    hidden = encoder(instance['input'])
+                else:
+                    hidden = encoder(instance)
                 fea = hidden.detach().cpu().data
                 self.update(ind, fea, is_memory)
                 lbs.append(labels) # shuffle=False
             lbs = torch.cat(lbs)
             self.mem_labels = lbs   
-    def init_moment_mixup(self, encoder, dataset, is_memory=False):
+    def init_moment_mixup(self, encoder, dataset, is_memory=False, is_llm=False):
         encoder.eval()
         datalen = len(dataset)
         self.mem_samples = dataset
-        self.mem_features = torch.zeros(datalen , self.config.encoder_output_size)
+        self.mem_features = torch.zeros(datalen , self.config.encoder_output_size if not is_llm else self.config.encoder_llm_output_size)
         data_loader = get_data_loader_BERT(self.config, dataset) # shuffle=False
         lbs = []
         for step, (instance, labels, ind) in enumerate(data_loader):
-            for k in instance.keys():
+            for k in ['ids', 'mask']:
                 instance[k] = instance[k].to(self.config.device)
             label_first = [temp[0] for temp in labels]
             label_second = [temp[1] for temp in labels]
-            mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+            if is_llm:
+                mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance['input'])
+            else:
+                mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
             # hidden = encoder(instance)
             merged_hidden = torch.cat((mask_hidden_1, mask_hidden_2), dim=0)
             merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
             fea = mask_hidden_1.detach().cpu().data
-            self.update(ind, fea, is_memory)
+            try:
+                self.update(ind, fea, is_memory = True)
+            except:
+                print('shape mismatch')
+                print(fea.shape, self.mem_features[ind].shape)
             lbs.append(torch.tensor(label_first)) # shuffle=False
         lbs = torch.cat(lbs)
         self.mem_labels = lbs         
@@ -79,12 +93,15 @@ class Moment:
         else:
             self.mem_features[ind] = feature
     
-    def update_allmem(self, encoder):
+    def update_allmem(self, encoder, is_llm=False):
             data_loader = get_data_loader_BERT(self.config, self.mem_samples, batch_size=64) # shuffle=False
             for step, (instance, labels, ind) in enumerate(data_loader):
-                for k in instance.keys():
+                for k in ['ids', 'mask']:
                     instance[k] = instance[k].to(self.config.device)
-                hidden = encoder(instance)
+                if is_llm:
+                    hidden, _ = encoder(instance['input'])
+                else:
+                    hidden = encoder(instance)
                 fea = hidden.detach().cpu().data
                 self.update(ind, fea, is_memory=True)
         

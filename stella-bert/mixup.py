@@ -62,7 +62,7 @@ def mixup_samples(sample1, sample2, sep_token_id=102, pad_token_id=0, max_len=51
         print("Truncated")
         merged_ids = merged_ids[:max_len]
         merged_mask = merged_mask[:max_len]
-    
+    merged_input = sample1['input'] + ' . ' + sample2['input']
     # Create a new label as a list of both relations
     merged_label = [sample1['relation'], sample2['relation']]
     cnt = [1 if x == 103 else 0 for x in merged_ids]
@@ -75,7 +75,8 @@ def mixup_samples(sample1, sample2, sep_token_id=102, pad_token_id=0, max_len=51
     return {
         'ids': merged_ids,
         'mask': merged_mask,
-        'relation': merged_label
+        'relation': merged_label,
+        'input': merged_input
     }
 
 # Example usage with a list of samples
