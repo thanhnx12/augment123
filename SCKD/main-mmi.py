@@ -20,6 +20,8 @@ import utils
 from mixup import mixup_data_augmentation
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss
 from torch.nn.utils import clip_grad_norm_
+import logging
+import sys
 
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
@@ -323,7 +325,8 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
             origin_labels = merged_labels[:]
             merged_labels = [map_relid2tempid[x.item()] for x in merged_labels]
             merged_labels = torch.tensor(merged_labels).to(config.device)
-            reps, _ = encoder.forward_mixup(tokens) # B x 2 x 2H
+            reps = encoder.forward_mixup(tokens) # B x 2 x 2H
+            # print(f"Rep: {reps.shape}")
             reps_first = reps[:,0,:] # B x 2H
             reps_second = reps[:,1,:] # B x 2H
             merged_reps = torch.cat([reps_first, reps_second], dim=0)
@@ -429,7 +432,7 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                                                          torch.ones(tokens['ids'].size(0) * 2).to(
                                                              config.device))
                 loss += hidden_distill_loss
-            loss += 0.5*loss_add1 + 0.5*loss_add2
+            loss += config.loss1_factor*loss_add1 + config.loss2_factor*loss_add2
             loss.backward()
             print("Loss: ", loss.item())
             losses.append(loss.item())
@@ -650,8 +653,14 @@ def data_augmentation(config, encoder, train_data, prev_train_data):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", default="tacred", type=str)
-    parser.add_argument("--shot", default=10, type=int)
+    parser.add_argument("--shot", default=5, type=int)
     parser.add_argument('--config', default='config.ini')
+    parser.add_argument("--step1-epochs", default=5, type=int)
+    parser.add_argument("--step2-epochs", default=10, type=int)
+    parser.add_argument("--step3-epochs", default=10, type=int)
+    parser.add_argument("--loss1-factor", default=0.5, type=float)
+    parser.add_argument("--loss2-factor", default=0.5, type=float)
+
     args = parser.parse_args()
     config = Config(args.config)
 
@@ -684,10 +693,13 @@ if __name__ == '__main__':
     config.task = args.task
     config.shot = args.shot
     
-    config.step1_epochs = 5
-    config.step2_epochs = 10
-    config.step3_epochs = 10
+    config.step1_epochs = args.step1_epochs
+    config.step2_epochs = args.step2_epochs
+    config.step3_epochs = args.step3_epochs
     config.temperature = 0.08
+
+    config.loss1_factor = args.loss1_factor
+    config.loss2_factor = args.loss2_factor
 
     if config.task == "FewRel":
         config.relation_file = "data/fewrel/relation_name.txt"
@@ -725,6 +737,21 @@ if __name__ == '__main__':
             config.training_file = "data/tacred/CFRLdata_10_100_10_10/train_0.txt"
             config.valid_file = "data/tacred/CFRLdata_10_100_10_10/valid_0.txt"
             config.test_file = "data/tacred/CFRLdata_10_100_10_10/test_0.txt"
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    stdout_handler.setFormatter(formatter)
+
+    file_handler = logging.FileHandler(f'SCKD-mmi-mixup-logs-task_{config.task}-shot_{config.shot}-epoch_{config.step1_epochs}_{config.step2_epochs}_{config.step3_epochs}-lossfactor_{config.loss1_factor}_{config.loss2_factor}.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stdout_handler)
 
     result_cur_test = []
     result_whole_test = []
@@ -831,12 +858,12 @@ if __name__ == '__main__':
             for relation in current_relations:
                 new_relation_data[rel2id[relation]].extend(generate_current_relation_data(config, encoder,dropout_layer,training_data[relation]))
 
-            expanded_train_data_for_initial, expanded_prev_samples = data_augmentation(config, encoder,
-                                                                                       train_data_for_initial,
-                                                                                       prev_samples)
+            # expanded_train_data_for_initial, expanded_prev_samples = data_augmentation(config, encoder,
+            #                                                                            train_data_for_initial,
+            #                                                                            prev_samples)
             torch.cuda.empty_cache()
-            print(len(train_data_for_initial))
-            print(len(expanded_train_data_for_initial))
+            # print(len(train_data_for_initial))
+            # print(len(expanded_train_data_for_initial))
 
 
             train_mem_model(config, encoder, dropout_layer, classifier, train_data_for_initial, config.step2_epochs, map_relid2tempid, new_relation_data,
@@ -896,6 +923,15 @@ if __name__ == '__main__':
             test_total.append(total_acc)
             print(test_cur)
             print(test_total)
+
+            logger.info('#############-----############')
+            logger.info(f'Restart Num {rou + 1}')
+            logger.info(f'task--{steps + 1}:')
+            logger.info(f'current test acc:{cur_acc}')
+            logger.info(f'history test acc:{total_acc}')
+            logger.info(f'test current: {test_cur}')
+            logger.info(f'test total: {test_total}')
+
             accuracy = []
             temp_rel2id = [rel2id[x] for x in history_relations]
             map_relid2tempid = {k: v for v, k in enumerate(temp_rel2id)}
@@ -904,6 +940,7 @@ if __name__ == '__main__':
                 #     evaluate_strict_model(config, encoder, classifier, data, history_relations, map_relid2tempid))
                 accuracy.append(evaluate_strict_model(config, encoder, dropout_layer, classifier, data, seen_relations, map_relid2tempid))
             print(accuracy)
+            logger.info(f'accuracy: {accuracy}')
 
             prev_encoder = deepcopy(encoder)
             prev_dropout_layer = deepcopy(dropout_layer)
@@ -913,16 +950,20 @@ if __name__ == '__main__':
         result_whole_test.append(np.array(test_total)*100)
         print("result_whole_test")
         print(result_whole_test)
+        logger.info(f'result_whole_test: {result_whole_test}')
         avg_result_cur_test = np.average(result_cur_test, 0)
         avg_result_all_test = np.average(result_whole_test, 0)
         print("avg_result_cur_test")
         print(avg_result_cur_test)
+        logger.info(f'avg_result_cur_test: {avg_result_cur_test}')
         print("avg_result_all_test")
         print(avg_result_all_test)
+        logger.info(f'avg_result_all_test: {avg_result_all_test}')
         # wandb.log({"avg_result_all_test": avg_result_all_test})
         std_result_all_test = np.std(result_whole_test, 0)
         print("std_result_all_test")
         print(std_result_all_test)
+        logger.info(f'std_result_all_test: {std_result_all_test}')
         # wandb.log({"std_result_all_test": std_result_all_test})
         accuracy = []
         temp_rel2id = [rel2id[x] for x in history_relations]
@@ -930,6 +971,7 @@ if __name__ == '__main__':
         for data in history_data:
             accuracy.append(evaluate_strict_model(config, encoder, dropout_layer, classifier, data, history_relations, map_relid2tempid))
         print(accuracy)
+        logger.info(f'accuracy: {accuracy}')
         bwt = 0.0
         for k in range(len(accuracy)-1):
             bwt += accuracy[k]-test_cur[k]
@@ -938,13 +980,19 @@ if __name__ == '__main__':
         fwt_whole.append(np.average(np.array(forward_accs)))
         print("bwt_whole")
         print(bwt_whole)
+        logger.info(f'bwt_whole: {bwt_whole}')
         print("fwt_whole")
         print(fwt_whole)
+        logger.info(f'fwt_whole: {fwt_whole}')
         avg_bwt = np.average(np.array(bwt_whole))
         print("avg_bwt_whole")
         print(avg_bwt)
+        logger.info(f'avg_bwt_whole: {avg_bwt}')
+
         avg_fwt = np.average(np.array(fwt_whole))
         print("avg_fwt_whole")
         print(avg_fwt)
+        logger.info(f'avg_fwt_whole: {avg_fwt}')
+
 
 

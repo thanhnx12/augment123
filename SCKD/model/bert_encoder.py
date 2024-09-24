@@ -157,6 +157,48 @@ class Bert_EncoderMLM(base_model):
             self.linear_transform = nn.Linear(self.bert_config.hidden_size, self.output_size, bias=True)
 
         self.layer_normalization = nn.LayerNorm([self.output_size])
+
+    def forward_mixup(self, inputs):
+        '''
+        :param inputs: of dimension [B, N]
+        :return: a result of size [B, H*2] or [B, H], according to different strategy
+        '''
+        batch_size = inputs['ids'].size()[0]
+        
+        # generate representation under a certain encoding strategy
+        if self.pattern == 'standard':
+            # in the standard mode, the representation is generated according to
+            #  the representation of[CLS] mark.
+            # output = self.encoder(inputs)[1]
+            output = self.encoder(inputs['ids'], attention_mask=inputs['mask'])[0]
+        else:
+            # input the sample to BERT
+            # tokens_output = self.encoder(inputs)[0] # [B,N] --> [B,N,H]
+            tokens_output = self.encoder(inputs['ids'], attention_mask=inputs['mask'], output_hidden_states = True).hidden_states[-1]
+            # print(f"tokens_output: {tokens_output.shape}")
+            # print(f"inputs['ids']: {inputs['ids'].shape}")
+
+            output = []
+            # for each sample in the batch, acquire its representations for [E11] and [E21]
+            for i in range(batch_size):
+                current_e11 = tokens_output[i][inputs['ids'][i] == 30522] # 2 x H
+                current_e21 = tokens_output[i][inputs['ids'][i] == 30524] # 2 x H
+                # check shape
+                if current_e11.size()[0] != 2:
+                    print('Error: [E11] is not found.')
+                if current_e21.size()[0] != 2:
+                    print('Error: [E21] is not found.')
+
+                # print(f"current_e11: {current_e11.shape}")
+                # print(f"current_e21: {current_e21.shape}")
+                
+                instance_output = torch.cat([current_e11, current_e21], dim=1)  # 2 x 2H
+                output.append(instance_output.unsqueeze(0))  # [1,2,2H]
+            # for each sample in the batch, concatenate the representations of [E11] and [E21], and reshape
+            output = torch.cat(output, dim=0)  # [B,2,2H]
+        return output
+
+    
     def infoNCE_f(self,V,C , temperature=1000.0):
         """
         V : 1 x dim_V
@@ -177,6 +219,7 @@ class Bert_EncoderMLM(base_model):
         return self.output_size
 
     def forward(self, inputs):
+        # print(f"inputs: {inputs}")
         '''
         :param inputs: of dimension [B, N]
         :return: a result of size [B, H*2] or [B, H], according to different strategy
@@ -225,6 +268,9 @@ class Bert_EncoderMLM(base_model):
             e11 = []
             e21 = []
             # for each sample in the batch, acquire the positions of its [E11] and [E21]
+
+            inputs, attention_mask = inputs['ids'], inputs['mask']
+
             for i in range(inputs.size()[0]):
                 tokens = inputs[i].cpu().numpy()
                 try: # hot fix for just 1 sample (error when test)
@@ -239,9 +285,7 @@ class Bert_EncoderMLM(base_model):
                     print("e11 not found" )
 
             # input the sample to BERT
-            # outputs = self.encoder(inputs,output_hidden_states=True)
-            output = self.encoder(inputs['ids'], attention_mask=inputs['mask'], output_hidden_states = True)
-             
+            outputs = self.encoder(inputs, attention_mask=attention_mask, output_hidden_states=True) 
             last_hidden_states = outputs.hidden_states[-1] # [B,N,H]
             lm_head_output = outputs.logits
             output = []
