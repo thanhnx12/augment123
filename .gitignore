@@ -1,1 +1,4 @@
 *.log
+*.env
+__pycache__/
+wandb/
