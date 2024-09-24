@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.cluster import KMeans
 from config import Config
-import wandb
+# import wandb
 
 from sampler import data_sampler_CFRL
 from data_loader import get_data_loader_BERT
@@ -16,6 +16,16 @@ from utils import Moment, gen_data
 from encoder import EncodingModel
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss
 from mixup import mixup_data_augmentation
+
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv("./.env")
+
+# Now you can access the environment variables using os.getenv()
+api_key = os.getenv('OPENAI_API_KEY')
+
 
 class Manager(object):
     def __init__(self, config) -> None:
@@ -135,7 +145,7 @@ class Manager(object):
                         None
 
                 infoNCE_loss = infoNCE_loss / len(list_labels)
-                wandb.log({'infoNCE_loss': infoNCE_loss, 'loss': loss})
+                # wandb.log({'infoNCE_loss': infoNCE_loss, 'loss': loss})
                 loss = 0.8*loss + infoNCE_loss
 
                 optimizer.zero_grad()
@@ -314,7 +324,7 @@ class Manager(object):
                 for rel in current_relations:
                     for sample in memory_samples[rel]:
                         sample_text = self._get_sample_text(self.config.training_data, sample['index'])
-                        gen_samples = gen_data(self.r2desc, self.rel2id, sample_text, self.config.num_gen, self.config.gpt_temp, self.config.key)
+                        gen_samples = gen_data(self.r2desc, self.rel2id, sample_text, self.config.num_gen, self.config.gpt_temp, api_key)
                         gen_text += gen_samples
                 for sample in gen_text:
                     data_generation.append(sampler.tokenize(sample))
@@ -374,15 +384,15 @@ if __name__ == '__main__':
     config.num_k = args.num_k
     config.num_gen = args.num_gen
 
-    wandb.init(
-        project = 'CPL',
-        name = f"CPL{args.task_name}_{args.num_k}-shot",
-        config = {
-            'name': "CPL",
-            "task" : args.task_name,
-            "shot" : f"{args.num_k}-shot"
-        }
-    )
+    # wandb.init(
+    #     project = 'CPL',
+    #     name = f"CPL{args.task_name}_{args.num_k}-shot",
+    #     config = {
+    #         'name': "CPL",
+    #         "task" : args.task_name,
+    #         "shot" : f"{args.num_k}-shot"
+    #     }
+    # )
     # config 
     print('#############params############')
     print(config.device)
