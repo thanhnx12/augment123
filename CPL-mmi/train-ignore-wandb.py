@@ -16,7 +16,7 @@ from utils import Moment, gen_data
 from encoder import EncodingModel
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
 from mixup import mixup_data_augmentation
-
+from sam import SAM
 
 from dotenv import load_dotenv
 import os
@@ -113,6 +113,9 @@ class Manager(object):
     def train_model(self, encoder, training_data, is_memory=False):
         data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
+        if self.config.SAM:
+            base_optimizer = optim.Adam
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=0.05, adaptive=True, lr=self.config.lr)
         encoder.train()
         epoch = self.config.epoch_mem if is_memory else self.config.epoch
         softmax = nn.Softmax(dim=0)
@@ -148,12 +151,45 @@ class Manager(object):
                 infoNCE_loss = infoNCE_loss / len(list_labels)
                 # wandb.log({'infoNCE_loss': infoNCE_loss, 'loss': loss})
                 loss = 0.8*loss + infoNCE_loss
+                if not self.config.SAM:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                else:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.first_step(zero_grad=True)
+                    hidden,lmhead_output = encoder(instance)
+                    loss = self.moment.contrastive_loss(hidden, labels, is_memory)
 
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
-                # update moment
+                    # compute infonceloss
+                    infoNCE_loss = 0
+                    list_labels = labels.cpu().numpy().tolist()
+
+                    for j in range(len(list_labels)):
+                        negative_sample_indexs = np.where(np.array(list_labels) != list_labels[j])[0]
+                        
+                        positive_hidden = hidden[j].unsqueeze(0)
+                        negative_hidden = hidden[negative_sample_indexs]
+
+                        positive_lmhead_output = lmhead_output[j].unsqueeze(0)
+
+                        f_pos = encoder.infoNCE_f(positive_lmhead_output, positive_hidden)
+                        f_neg = encoder.infoNCE_f(positive_lmhead_output, negative_hidden)
+                        f_concat = torch.cat([f_pos, f_neg], dim=1).squeeze()
+                        f_concat = torch.log(torch.max(f_concat , torch.tensor(1e-9).to(self.config.device)))
+                        try:
+                            infoNCE_loss += -torch.log(softmax(f_concat)[0])
+                        except:
+                            None
+
+                    infoNCE_loss = infoNCE_loss / len(list_labels)
+                    # wandb.log({'infoNCE_loss': infoNCE_loss, 'loss': loss})
+                    loss = 0.8*loss + infoNCE_loss
+                    loss.backward()
+                    optimizer.second_step(zero_grad=True)
+                    # update moment
                 if is_memory:
                     self.moment.update(ind, hidden.detach().cpu().data, is_memory=True)
                     # self.moment.update_allmem(encoder)
@@ -169,6 +205,9 @@ class Manager(object):
     def train_model_mixup(self, encoder, training_data):
         data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
+        if self.config.SAM:
+            base_optimizer = optim.Adam
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=0.05, adaptive=True, lr=self.config.lr)
         encoder.train()
         epoch = 1
         
@@ -236,10 +275,40 @@ class Manager(object):
                 #     optimizer.zero_grad()
                 #     continue
                 # loss = 0.5*loss + 0.25*loss1 + 0.25*loss2
-                optimizer.zero_grad()
-                sum_loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
+                if not self.config.SAM:
+                    optimizer.zero_grad()
+                    sum_loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                else:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.first_step(zero_grad=True)
+                    mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+                    loss1 = neg_cos_sim_loss(mask_hidden_1, mask_hidden_2)
+                    mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
+                    loss2 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
+                    
+                    
+                    merged_hidden = torch.cat((mask_hidden_1, mask_hidden_2), dim=0)
+                    merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
+                    
+        
+                    if merged_hidden.shape[1] != 768: # hard code :)
+                        print('something wrong')
+                        continue
+                    loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
+                    sum_loss = 0.0
+                    if not torch.isnan(loss1).any():
+                        sum_loss += self.config.mixup_loss_1*loss1
+                    if not torch.isnan(loss2).any():
+                        sum_loss += self.config.mixup_loss_2*loss2
+                    if not torch.isnan(loss).any():
+                        sum_loss += 0.5*loss
+                    sum_loss.backward()
+                    optimizer.second_step(zero_grad=True)
+                    
+                        
                 self.moment.update(ind, mask_hidden_1.detach().cpu().data, is_memory=True)
                 # print
                 sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, sum_loss.item()) + '\r')
@@ -399,6 +468,7 @@ if __name__ == '__main__':
     parser.add_argument("--epoch_mem", default=5, type=int)
     parser.add_argument("--mixup_loss_1", default=0.25, type=float)
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
+    parser.add_argument("--SAM", action = 'store_true')
     
     args = parser.parse_args()
     config = Config('config.ini')
