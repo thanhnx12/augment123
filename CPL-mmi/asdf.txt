@@ -1,0 +1,70 @@
+#############params############
+cuda
+Task=Tacred, 5-shot
+Encoding model: bert
+pattern=hybridprompt
+mem=1, margin=0.3, gen=1, gen_num=1
+#############params############
+--------Round  0
+seed:  100
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/train.pkl
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/valid.pkl
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/test.pkl
+Task_order: [7 3 0 5 4 1 6 2]
+prepared data!
+#############params############
+cuda
+Task=Tacred, 5-shot
+Encoding model: bert
+pattern=hybridprompt
+mem=1, margin=0.3, gen=1, gen_num=1
+#############params############
+--------Round  0
+seed:  100
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/train.pkl
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/valid.pkl
+data/CFRLTacred/CFRLdata_6_100_5_5/_process_BERT_hybridprompt_12token/test.pkl
+Task_order: [7 3 0 5 4 1 6 2]
+prepared data!
+#### person countries of residence ####
+You are a data scientist working on a relation extraction task. Please do the following task and do not give output in the markdown format.One sample in relation extraction datasets consists of a relation, a context, a pair of head and tail entities in the context.The head entity has the relation with the tail entity.
+Relation "person countries of residence" means a person is living in a country.
+Here is an example:
+Relation: person countries of residence
+Context: a senior administration official says retired vice adm mike mcconnell will be named to succeed john negroponte as national intelligence director for the united states .
+Head Entity: john negroponte
+Tail Entity: united states
+Please generate 1 diversity samples (must have full : Relation , Context , Head Entity , Tail Entity) like the above example for the relation "person countries of residence":
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+gen failed
+
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+Connection error.
+gen failed

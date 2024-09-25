@@ -52,7 +52,28 @@ class Moment:
                 lbs.append(labels) # shuffle=False
             lbs = torch.cat(lbs)
             self.mem_labels = lbs            
-
+    def init_moment_mixup(self, encoder, dataset, is_memory=False):
+        encoder.eval()
+        datalen = len(dataset)
+        self.mem_samples = dataset
+        self.mem_features = torch.zeros(datalen , self.config.encoder_output_size)
+        data_loader = get_data_loader_BERT(self.config, dataset) # shuffle=False
+        lbs = []
+        for step, (instance, labels, ind) in enumerate(data_loader):
+            for k in instance.keys():
+                instance[k] = instance[k].to(self.config.device)
+            label_first = [temp[0] for temp in labels]
+            label_second = [temp[1] for temp in labels]
+            mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+            # hidden = encoder(instance)
+            merged_hidden = torch.cat((mask_hidden_1, mask_hidden_2), dim=0)
+            merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
+            fea = mask_hidden_1.detach().cpu().data
+            self.update(ind, fea, is_memory)
+            lbs.append(torch.tensor(label_first)) # shuffle=False
+        lbs = torch.cat(lbs)
+        self.mem_labels = lbs         
+    
     def update(self, ind, feature, is_memory=False):
         if not is_memory:
             self.features[ind] = feature

@@ -365,6 +365,7 @@ if __name__ == '__main__':
     parser.add_argument("--task_name", default="FewRel", type=str)
     parser.add_argument("--num_k", default=5, type=int)
     parser.add_argument("--num_gen", default=2, type=int)
+    parser.add_argument("--mixup", store)
     args = parser.parse_args()
     config = Config('config.ini')
     config.task_name = args.task_name

@@ -14,8 +14,9 @@ from sampler import data_sampler_CFRL
 from data_loader import get_data_loader_BERT
 from utils import Moment, gen_data
 from encoder import EncodingModel
-from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss
+from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
 from mixup import mixup_data_augmentation
+
 
 from dotenv import load_dotenv
 import os
@@ -174,6 +175,7 @@ class Manager(object):
         loss_retrieval = MultipleNegativesRankingLoss()
         supervised_simcse_loss = SupervisedSimCSELoss()
         contrastive_loss = ContrastiveLoss()
+        neg_cos_sim_loss = NegativeCosSimLoss()
         
         
         for i in range(epoch):
@@ -196,21 +198,20 @@ class Manager(object):
                             new_matrix_labels[i1][j] = 1.0
 
                 new_matrix_labels_tensor = torch.tensor(new_matrix_labels).to(config.device)
-                loss1 = loss_retrieval(mask_hidden_1, mask_hidden_2, new_matrix_labels_tensor)
+                loss1 = neg_cos_sim_loss(mask_hidden_1, mask_hidden_2)
                 
-                # mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
+                mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
                 
-                # matrix_labels_tensor_mean_12 = np.zeros((mask_hidden_mean_12.shape[0], mask_hidden_mean_12.shape[0]), dtype=float)
-                # for i1 in range(mask_hidden_mean_12.shape[0]):
-                #         for j1 in range(mask_hidden_mean_12.shape[0]):
-                #             if i1 != j1:
-                #                 if label_first[i1] in [label_first[j1], label_second[j1]] and label_second[i1] in [label_first[j1], label_second[j1]]:
-                #                     matrix_labels_tensor_mean_12[i1][j1] = 1.0
-                # matrix_labels_tensor_mean_12 = torch.tensor(matrix_labels_tensor_mean_12).to(config.device)
+                matrix_labels_tensor_mean_12 = np.zeros((mask_hidden_mean_12.shape[0], mask_hidden_mean_12.shape[0]), dtype=float)
+                for i1 in range(mask_hidden_mean_12.shape[0]):
+                        for j1 in range(mask_hidden_mean_12.shape[0]):
+                            if i1 != j1:
+                                if label_first[i1] in [label_first[j1], label_second[j1]] and label_second[i1] in [label_first[j1], label_second[j1]]:
+                                    matrix_labels_tensor_mean_12[i1][j1] = 1.0
+                matrix_labels_tensor_mean_12 = torch.tensor(matrix_labels_tensor_mean_12).to(config.device)
                 
-                # loss2 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
+                loss2 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
                 
-                # loss = loss1 + loss2
                 
                 merged_hidden = torch.cat((mask_hidden_1, mask_hidden_2), dim=0)
                 merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
@@ -220,14 +221,28 @@ class Manager(object):
                     print('something wrong')
                     continue
                 loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
-                loss = loss*0.5 + loss1
+                sum_loss = 0.0
+                if not torch.isnan(loss1).any():
+                    sum_loss += self.config.mixup_loss_1*loss1
+                if not torch.isnan(loss2).any():
+                    sum_loss += self.config.mixup_loss_2*loss2
+                if not torch.isnan(loss).any():
+                    sum_loss += 0.5*loss
+                
+                    
+                # if torch.isnan(loss1).any() or torch.isnan(loss2).any() or torch.isnan(loss).any():
+                #     print(loss1, loss2, loss)
+                #     print('nan loss')
+                #     optimizer.zero_grad()
+                #     continue
+                # loss = 0.5*loss + 0.25*loss1 + 0.25*loss2
                 optimizer.zero_grad()
-                loss.backward()
+                sum_loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
                 self.moment.update(ind, mask_hidden_1.detach().cpu().data, is_memory=True)
                 # print
-                sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
+                sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, sum_loss.item()) + '\r')
                 sys.stdout.flush() 
         print('')             
           
@@ -339,8 +354,9 @@ class Manager(object):
                 data_for_train = training_data_initialize + memory_data_initialize
                 mixup_samples = mixup_data_augmentation(data_for_train)
                 print('Mixup data size: ', len(mixup_samples))
-                self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True) 
-                self.train_model_mixup(encoder, mixup_samples, seen_des)
+                self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True)
+                if config.mixup:
+                    self.train_model_mixup(encoder, mixup_samples)
                 self.moment.init_moment(encoder, memory_data_initialize, is_memory=True) 
                 self.train_model(encoder, memory_data_initialize, is_memory=True)
 
@@ -378,22 +394,23 @@ if __name__ == '__main__':
     parser.add_argument("--task_name", default="FewRel", type=str)
     parser.add_argument("--num_k", default=5, type=int)
     parser.add_argument("--num_gen", default=2, type=int)
+    parser.add_argument("--mixup", action = 'store_true')
+    parser.add_argument("--epoch", default=10, type=int)
+    parser.add_argument("--epoch_mem", default=5, type=int)
+    parser.add_argument("--mixup_loss_1", default=0.25, type=float)
+    parser.add_argument("--mixup_loss_2", default=0.25, type=float)
+    
     args = parser.parse_args()
     config = Config('config.ini')
     config.task_name = args.task_name
     config.num_k = args.num_k
     config.num_gen = args.num_gen
-
-    # wandb.init(
-    #     project = 'CPL',
-    #     name = f"CPL{args.task_name}_{args.num_k}-shot",
-    #     config = {
-    #         'name': "CPL",
-    #         "task" : args.task_name,
-    #         "shot" : f"{args.num_k}-shot"
-    #     }
-    # )
-    # config 
+    config.mixup = args.mixup
+    config.epoch = args.epoch
+    config.epoch_mem = args.epoch_mem
+    config.mixup_loss_1 = args.mixup_loss_1
+    config.mixup_loss_2 = args.mixup_loss_2
+    
     print('#############params############')
     print(config.device)
     config.device = torch.device(config.device)
