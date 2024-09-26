@@ -20,6 +20,7 @@ from sam import SAM
 
 from dotenv import load_dotenv
 import os
+import logging
 
 # Load environment variables from .env file
 load_dotenv("./.env")
@@ -198,8 +199,10 @@ class Manager(object):
                 # print
                 if is_memory:
                     sys.stdout.write('MemoryTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
+                    # logger.info('MemoryTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()))
                 else:
                     sys.stdout.write('CurrentTrain: epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
+                    # logger.info('CurrentTrain: epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()))
                 sys.stdout.flush() 
         print('')           
     def train_model_mixup(self, encoder, training_data):
@@ -258,6 +261,7 @@ class Manager(object):
     
                 if merged_hidden.shape[1] != 768: # hard code :)
                     print('something wrong')
+                    logger.info('something wrong')
                     continue
                 loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
                 sum_loss = 0.0
@@ -296,6 +300,7 @@ class Manager(object):
         
                     if merged_hidden.shape[1] != 768: # hard code :)
                         print('something wrong')
+                        logger.info("something wrong")
                         continue
                     loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
                     sum_loss = 0.0
@@ -312,6 +317,7 @@ class Manager(object):
                 self.moment.update(ind, mask_hidden_1.detach().cpu().data, is_memory=True)
                 # print
                 sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, sum_loss.item()) + '\r')
+                # logger.info('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, sum_loss.item()))
                 sys.stdout.flush() 
         print('')             
           
@@ -340,8 +346,8 @@ class Manager(object):
             acc = correct / batch_size
             corrects += correct
             total += batch_size
-            sys.stdout.write('[EVAL] batch: {0:4} | acc: {1:3.2f}%,  total acc: {2:3.2f}%   '\
-                .format(batch_num, 100 * acc, 100 * (corrects / total)) + '\r')
+            sys.stdout.write('[EVAL] batch: {0:4} | acc: {1:3.2f}%,  total acc: {2:3.2f}%   '.format(batch_num, 100 * acc, 100 * (corrects / total)) + '\r')
+            # logger.info('[EVAL] batch: {0:4} | acc: {1:3.2f}%,  total acc: {2:3.2f}%   '.format(batch_num, 100 * acc, 100 * (corrects / total)))
             sys.stdout.flush()        
         print('')
         return corrects / total
@@ -373,6 +379,7 @@ class Manager(object):
         self.config.vocab_size = sampler.config.vocab_size
 
         print('prepared data!')
+        logger.info('prepared data!')
         self.id2rel = sampler.id2rel
         self.rel2id = sampler.rel2id
         self.r2desc = self._read_description(self.config.relation_description)
@@ -423,6 +430,7 @@ class Manager(object):
                 data_for_train = training_data_initialize + memory_data_initialize
                 mixup_samples = mixup_data_augmentation(data_for_train)
                 print('Mixup data size: ', len(mixup_samples))
+                logger.info(f"Mixup data size: {len(mixup_samples)}")
                 self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True)
                 if config.mixup:
                     self.train_model_mixup(encoder, mixup_samples)
@@ -453,6 +461,8 @@ class Manager(object):
             total_acc.append('{:.4f}'.format(ac2))
             print('cur_acc: ', cur_acc)
             print('his_acc: ', total_acc)
+            logger.info(f"cur_acc: {cur_acc}")
+            logger.info(f"his_acc: {total_acc}")
 
         torch.cuda.empty_cache()
         return total_acc_num
@@ -480,6 +490,7 @@ if __name__ == '__main__':
     config.epoch_mem = args.epoch_mem
     config.mixup_loss_1 = args.mixup_loss_1
     config.mixup_loss_2 = args.mixup_loss_2
+    config.SAM = args.SAM
     
     print('#############params############')
     print(config.device)
@@ -517,7 +528,33 @@ if __name__ == '__main__':
             config.rel_cluster_label = './data/CFRLTacred/CFRLdata_6_100_5_10/rel_cluster_label_0.npy'
             config.training_data = './data/CFRLTacred/CFRLdata_6_100_5_10/train_0.txt'
             config.valid_data = './data/CFRLTacred/CFRLdata_6_100_5_10/valid_0.txt'
-            config.test_data = './data/CFRLTacred/CFRLdata_6_100_5_10/test_0.txt'        
+            config.test_data = './data/CFRLTacred/CFRLdata_6_100_5_10/test_0.txt'
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    stdout_handler.setFormatter(formatter)
+
+    pre = ""
+    if args.mixup: pre += "mixup|"
+    if args.SAM: pre += "SAM"
+
+    file_handler = logging.FileHandler(f'CPL-mmi-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stdout_handler)
+
+    logger.info('#############params############')
+    logger.info(f'Task={config.task_name}, {config.num_k}-shot')
+    logger.info(f'Encoding model: {config.model}')
+    logger.info(f'pattern={config.pattern}')
+    logger.info(f'mem={config.memory_size}, margin={config.margin}, gen={config.gen}, gen_num={config.num_gen}')
+    logger.info('#############params############')
 
     # seed 
     random.seed(config.seed) 
@@ -531,6 +568,8 @@ if __name__ == '__main__':
         config.seed = base_seed + i * 100
         print('--------Round ', i)
         print('seed: ', config.seed)
+        logger.info(f"--------Round {i}")
+        logger.info(f"seed: {config.seed}")
         manager = Manager(config)
         acc = manager.train()
         acc_list.append(acc)
@@ -540,6 +579,8 @@ if __name__ == '__main__':
     ave = np.mean(accs, axis=0)
     print('----------END')
     print('his_acc mean: ', np.around(ave, 4))
+    logger.info('----------END')
+    logger.info(f'his_acc mean: {np.around(ave, 4)}')
 
 
 
