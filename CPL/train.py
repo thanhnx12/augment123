@@ -14,9 +14,10 @@ from sampler import data_sampler_CFRL
 from data_loader import get_data_loader_BERT
 from utils import Moment, gen_data
 from encoder import EncodingModel
-from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss
+from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
 from transformers import BertTokenizer
 from mixup import mixup_data_augmentation
+from sam import SAM
 
 
 class Manager(object):
@@ -99,109 +100,15 @@ class Manager(object):
 
         return mem_set, mem_feas
         # return mem_set, features, rel_proto
-    def get_augment_data_label(self, instance, labels):
-        max_len = self.config.max_length
-        batch_size, dim = instance['ids'].shape
 
-        augmented_ids = []
-        augmented_masks = []
-        augmented_labels = []
-        label_first = []
-        label_second = []
-
-        if batch_size < 4:
-            random_list_i = random.sample(range(0, batch_size), min(4, batch_size))
-            random_list_j = random.sample(range(0, batch_size), min(4, batch_size))
-        else:
-            random.seed(42)
-            random_list_i = random.sample(range(0, batch_size), 4)
-            remaining_elements = list(set(range(0, batch_size)) - set(random_list_i))
-            
-            if len(remaining_elements) >= 4:
-                random_list_j = random.sample(remaining_elements, 4)
-            else:
-                random_list_j = random.sample(range(0, batch_size), 4)
-
-        for i in random_list_i:
-            for j in random_list_j:
-                # Filter 'ids' using the corresponding 'mask' to remove zero padding
-                ids1 = instance['ids'][i][instance['mask'][i] != 0]  # Remove padding from the first sequence
-                ids2 = instance['ids'][j][instance['mask'][j] != 0]  # Remove padding from the second sequence
-
-                # Concatenate the filtered sequences
-                combined_ids = torch.cat((ids1, ids2)).to(config.device)
-
-                # Truncate the concatenated sequence if it exceeds max_len - 1 and add [102] at the end
-                if len(combined_ids) > max_len - 1:
-                    combined_ids = combined_ids[:max_len - 1]
-                    combined_ids = torch.cat((combined_ids, torch.tensor([102], dtype=combined_ids.dtype).to(config.device))).to(config.device)
-
-                    # Calculate the mask: 1 for valid positions, 0 for padding
-                combined_mask = torch.ones_like(combined_ids, dtype=torch.float).to(config.device)
-
-                # Pad with zeros if the sequence is shorter than max_len
-                if len(combined_ids) < max_len:
-                    padding_length = max_len - len(combined_ids)
-                    padding = torch.zeros(padding_length, dtype=combined_ids.dtype).to(config.device)
-                    combined_ids = torch.cat((combined_ids, padding)).to(config.device)
-
-                    # Update the mask with zeros for padded positions
-                    combined_mask = torch.cat((combined_mask, torch.zeros(padding_length, dtype=torch.float).to(config.device)))
-
-                augmented_ids.append(combined_ids)
-                augmented_masks.append(combined_mask)
-
-                # Construct the label pairs
-                new_label = torch.tensor([labels[i], labels[j]])
-                augmented_labels.append(new_label)
-                label_first.append(labels[i])
-                label_second.append(labels[j])
-
-        # Convert the lists into tensors
-        augmented_data = {
-            'ids': torch.stack(augmented_ids),
-            'mask': torch.stack(augmented_masks)
-        }
-        augmented_labels = torch.stack(augmented_labels)
-        label_first = torch.tensor(label_first)
-        label_second = torch.tensor(label_second)
-
-        return augmented_data, augmented_labels, label_first, label_second
     
-    def mask_dropout(self, input_ids, attention_mask, mask_token_id, dropout_rate=0.1):
-        """
-        Mask dropout implementation of hard prompt
-        """
-        batch_size, seq_length = input_ids.shape
-        dropout_mask = torch.ones_like(input_ids, dtype=torch.bool)
-        
-        for i in range(batch_size):
-            # Find the position of the existing [MASK] token
-            mask_position = (input_ids[i] == mask_token_id).nonzero(as_tuple=True)[0]
-            if len(mask_position) == 0:
-                mask_position = seq_length
-            else:
-                mask_position = mask_position[0]
-            
-            # Apply dropout only to tokens before the [MASK] token
-            dropout_mask[i, :mask_position] = torch.bernoulli(torch.full((mask_position,), 1 - dropout_rate)).bool()
-        
-        # Combine dropout mask with attention mask
-        combined_mask = dropout_mask & attention_mask.bool()
-        
-        # Create masked input ids
-        masked_input_ids = input_ids.clone()
-        masked_input_ids[~combined_mask] = mask_token_id
-        
-        # Update attention mask
-        new_attention_mask = attention_mask.clone()
-        new_attention_mask[~combined_mask] = 0
-        
-        return masked_input_ids, new_attention_mask
-    
-    def train_model(self, encoder, training_data, seen_des, is_memory=False):
+    def train_model(self, encoder, training_data, is_memory=False):
         data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
+        if self.config.SAM:
+            base_optimizer = optim.Adam
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
+            
         encoder.train()
         epoch = self.config.epoch_mem if is_memory else self.config.epoch
         
@@ -215,77 +122,21 @@ class Manager(object):
                     instance[k] = instance[k].to(self.config.device)
                 hidden = encoder(instance)
                 
-                #-----------------Description-----------------
-                # batch_instance = {'ids': [], 'mask': []} 
-                # # Create ids and mask tensors in a more compact way
-                # batch_instance['ids'] = torch.stack([torch.tensor(seen_des[self.id2rel[label.item()]]['ids']) for label in labels]).to(self.config.device)
-                # batch_instance['mask'] = torch.stack([torch.tensor(seen_des[self.id2rel[label.item()]]['mask']) for label in labels]).to(self.config.device)
-                # n = len(labels)
-                # labels_tensor = torch.tensor(labels).unsqueeze(1)  # Shape: (n, 1)
-                # new_matrix_labels_tensor_des = (labels_tensor == labels_tensor.T).to(torch.float).to(self.config.device)
-                # hidden_des = encoder.forward_des(batch_instance) # b, dim
-                # loss2 = loss_retrieval(hidden, hidden_des, new_matrix_labels_tensor_des)
-                #-----------------Description------------------
-                
-                                
-                #-----------------Augment data-----------------
-                # augmented_instance, augmented_labels, label_first, label_second = self.get_augment_data_label(instance, labels)
-                # mask_hidden_1, mask_hidden_2 = encoder(augmented_instance, is_augment = True)
-
-                # n = len(label_first)
-                # m = len(label_second)
-                # new_matrix_labels = np.zeros((n, m), dtype=float)
-
-                # # Fill the matrix according to the label comparison
-                # for i1 in range(n):
-                #     for j in range(m):
-                #         if label_first[i1] == label_second[j]:
-                #             new_matrix_labels[i1][j] = 1.0
-
-                # new_matrix_labels_tensor = torch.tensor(new_matrix_labels).to(config.device)
-
-                # loss4 = loss_retrieval(mask_hidden_1, mask_hidden_2, new_matrix_labels_tensor)
-                #-----------------Augment data-----------------
-                
-                #-----------------contrastive augment vs des---
-                # mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
-                # label2desembedding = {}
-                # labels_list = labels.tolist()
-                # for i in range(len(labels)):
-                #     label2desembedding[labels_list[i]] = hidden_des[i]
-                # label_first = label_first.tolist()
-                # label_second = label_second.tolist()
-                # hidden_des_mean_12 = [(label2desembedding[label_first[i]] + label2desembedding[label_second[i]]) / 2 for i in range(len(label_first))]
-                # hidden_des_mean_12 = torch.stack(hidden_des_mean_12, dim=0)
-                
-                # new_matrix_labels_tensor_des = (labels_tensor == labels_tensor.T).to(torch.float).to(self.config.device)
-                # matrix_labels_tensor_mean_12 = np.zeros((mask_hidden_mean_12.shape[0], mask_hidden_mean_12.shape[0]), dtype=float)
-                # for i1 in range(mask_hidden_mean_12.shape[0]):
-                #     for j1 in range(mask_hidden_mean_12.shape[0]):
-                #         if label_first[i1] in [label_first[j1], label_second[j1]] and label_second[i1] in [label_first[j1], label_second[j1]]:
-                #             matrix_labels_tensor_mean_12[i1][j1] = 1.0
-                # matrix_labels_tensor_mean_12 = torch.tensor(matrix_labels_tensor_mean_12).to(config.device)
-
-                # loss3 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
-                #-----------------contrastive augment vs des---
-                
-                # Add supervised SimCSE loss with mask dropout
-                # mask_token_id = self.tokenizer.mask_token_id
-                # masked_ids, masked_mask = self.mask_dropout(instance['ids'], instance['mask'], mask_token_id)
-                # masked_instance = {'ids': masked_ids, 'mask': masked_mask}
-                # masked_hidden = encoder.forward_mask_dropout(masked_instance)
-                # simcse_loss = supervised_simcse_loss(hidden, masked_hidden, labels)
-                
-                
                 loss = self.moment.contrastive_loss(hidden, labels, is_memory)
                 # print("Losses: ", loss, loss2, loss3, loss4, simcse_loss)
                 loss = loss
                 # + loss3 + 0.5*loss4
-                
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
+                if not self.config.SAM:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+                else:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.first_step(zero_grad=True)
+                    
+                    self.moment.contrastive_loss(encoder(instance), labels, is_memory).backward()
+                    optimizer.second_step(zero_grad=True)
                 # update moment
                 if is_memory:
                     self.moment.update(ind, hidden.detach().cpu().data, is_memory=True)
@@ -299,16 +150,22 @@ class Manager(object):
                     sys.stdout.write('CurrentTrain: epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
                 sys.stdout.flush() 
         print('')             
-    def train_model_mixup(self, encoder, training_data, seen_des):
+    def train_model_mixup(self, encoder, training_data):
         data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
+        if self.config.SAM:
+            base_optimizer = optim.Adam
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
+            
         encoder.train()
         epoch = 1
         
         loss_retrieval = MultipleNegativesRankingLoss()
         supervised_simcse_loss = SupervisedSimCSELoss()
         contrastive_loss = ContrastiveLoss()
-        
+        neg_cos_sim_loss = NegativeCosSimLoss()
+        # Set the maximum gradient norm for clipping
+        max_grad_norm = 10.0  # You can adjust this value as needed
         
         for i in range(epoch):
             for batch_num, (instance, labels, ind) in enumerate(data_loader):
@@ -330,21 +187,20 @@ class Manager(object):
                             new_matrix_labels[i1][j] = 1.0
 
                 new_matrix_labels_tensor = torch.tensor(new_matrix_labels).to(config.device)
-                loss1 = loss_retrieval(mask_hidden_1, mask_hidden_2, new_matrix_labels_tensor)
+                # loss1 = loss_retrieval(mask_hidden_1, mask_hidden_2, new_matrix_labels_tensor)
+                loss1 = neg_cos_sim_loss(mask_hidden_1, mask_hidden_2)
+                mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
                 
-                # mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
+                matrix_labels_tensor_mean_12 = np.zeros((mask_hidden_mean_12.shape[0], mask_hidden_mean_12.shape[0]), dtype=float)
+                for i1 in range(mask_hidden_mean_12.shape[0]):
+                        for j1 in range(mask_hidden_mean_12.shape[0]):
+                            if i1 != j1:
+                                if label_first[i1] in [label_first[j1], label_second[j1]] and label_second[i1] in [label_first[j1], label_second[j1]]:
+                                    matrix_labels_tensor_mean_12[i1][j1] = 1.0
+                matrix_labels_tensor_mean_12 = torch.tensor(matrix_labels_tensor_mean_12).to(config.device)
                 
-                # matrix_labels_tensor_mean_12 = np.zeros((mask_hidden_mean_12.shape[0], mask_hidden_mean_12.shape[0]), dtype=float)
-                # for i1 in range(mask_hidden_mean_12.shape[0]):
-                #         for j1 in range(mask_hidden_mean_12.shape[0]):
-                #             if i1 != j1:
-                #                 if label_first[i1] in [label_first[j1], label_second[j1]] and label_second[i1] in [label_first[j1], label_second[j1]]:
-                #                     matrix_labels_tensor_mean_12[i1][j1] = 1.0
-                # matrix_labels_tensor_mean_12 = torch.tensor(matrix_labels_tensor_mean_12).to(config.device)
+                loss2 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
                 
-                # loss2 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
-                
-                # loss = loss1 + loss2
                 
                 merged_hidden = torch.cat((mask_hidden_1, mask_hidden_2), dim=0)
                 merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
@@ -354,16 +210,36 @@ class Manager(object):
                     print('something wrong')
                     continue
                 loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
-                loss = loss*0.5 + loss1
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
+                if torch.isnan(loss1).any() or torch.isnan(loss2).any() or torch.isnan(loss).any():
+                    print('nan loss')
+                    optimizer.zero_grad()
+                    continue
+                loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
+                sum_loss = 0.0
+                if not torch.isnan(loss1).any():
+                    sum_loss += self.config.mixup_loss_1*loss1
+                if not torch.isnan(loss2).any():
+                    sum_loss += self.config.mixup_loss_2*loss2
+                if not torch.isnan(loss).any():
+                    sum_loss += 0.5*loss
+                if not self.config.SAM:
+                    optimizer.zero_grad()
+                    sum_loss.backward()
+                    optimizer.step()
+                else:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.first_step(zero_grad=True)
+                    mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+                    merged_hidden = torch.cat((mask_hidden_1, mask_hidden_2), dim=0)
+                    self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True).backward()
+                    optimizer.second_step(zero_grad=True)
+                
                 self.moment.update(ind, mask_hidden_1.detach().cpu().data, is_memory=True)
                 # print
                 sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
                 sys.stdout.flush() 
-        print('')             
+        print('')                         
         
     def eval_encoder_proto(self, encoder, seen_proto, seen_relid, test_data):
         batch_size = 16
@@ -438,34 +314,21 @@ class Manager(object):
         for step, (training_data, valid_data, test_data, current_relations, \
             historic_test_data, seen_relations, seen_descriptions) in enumerate(sampler):
             
-            for rel in current_relations:
-                ids = self.tokenizer.encode(seen_descriptions[rel],
-                                    padding='max_length',
-                                    truncation=True,
-                                    max_length=self.config.max_length)        
-                # mask
-                mask = np.zeros(self.config.max_length, dtype=np.int32)
-                end_index = np.argwhere(np.array(ids) == self.tokenizer.get_vocab()[self.tokenizer.sep_token])[0][0]
-                mask[:end_index + 1] = 1 
-                if rel not in seen_des:
-                    seen_des[rel] = {}
-                    seen_des[rel]['ids'] = ids
-                    seen_des[rel]['mask'] = mask
-            
             # Initialization
             self.moment = Moment(self.config)
-
+            self.config.SAM = True
             # Train current task
             training_data_initialize = []
             for rel in current_relations:
                 training_data_initialize += training_data[rel]
             self.moment.init_moment(encoder, training_data_initialize, is_memory=False)
-            self.train_model(encoder, training_data_initialize,seen_des)
+            self.train_model(encoder, training_data_initialize)
 
             # Select memory samples
             for rel in current_relations:
                 memory_samples[rel], _ = self.select_memory(encoder, training_data[rel])
 
+            self.config.SAM = False
             # Data gen
             if self.config.gen == 1:
                 gen_text = []
@@ -488,9 +351,9 @@ class Manager(object):
                 mixup_samples = mixup_data_augmentation(data_for_train)
                 print('Mixup data size: ', len(mixup_samples))
                 self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True) 
-                self.train_model_mixup(encoder, mixup_samples, seen_des)
+                self.train_model_mixup(encoder, mixup_samples)
                 self.moment.init_moment(encoder, memory_data_initialize, is_memory=True)
-                self.train_model(encoder, memory_data_initialize, seen_des, is_memory=True)
+                self.train_model(encoder, memory_data_initialize, is_memory=True)
                 
 
             # Update proto
@@ -505,25 +368,7 @@ class Manager(object):
             for rel in seen_relations:
                 seen_relid.append(self.rel2id[rel])
             
-            # get representation of seen description
-            seen_des_by_id = {}
-            for rel in seen_relations:
-                seen_des_by_id[self.rel2id[rel]] = seen_des[rel]
-            list_seen_des = []
-            for i in range(len(seen_proto)):
-                list_seen_des.append(seen_des_by_id[seen_relid[i]])
-
-            rep_des = []
-            for i in range(len(list_seen_des)):
-                sample = {
-                    'ids' : torch.tensor([list_seen_des[i]['ids']]).to(self.config.device),
-                    'mask' : torch.tensor([list_seen_des[i]['mask']]).to(self.config.device)
-                }
-                hidden = encoder.forward_des(sample)
-                hidden = hidden.detach().cpu().data
-                rep_des.append(hidden)
-            rep_des = torch.cat(rep_des, dim=0)
-            
+        
             # Eval current task and history task
             test_data_initialize_cur, test_data_initialize_seen = [], []
             for rel in current_relations:
@@ -551,11 +396,25 @@ if __name__ == '__main__':
     parser.add_argument("--task_name", default="FewRel", type=str)
     parser.add_argument("--num_k", default=5, type=int)
     parser.add_argument("--num_gen", default=2, type=int)
+    parser.add_argument("--mixup", action = 'store_true')
+    parser.add_argument("--epoch", default=10, type=int)
+    parser.add_argument("--epoch_mem", default=5, type=int)
+    parser.add_argument("--mixup_loss_1", default=0.25, type=float)
+    parser.add_argument("--mixup_loss_2", default=0.25, type=float)
+    parser.add_argument("--SAM", action = 'store_true')
+    parser.add_argument("--rho", default=0.05, type=float)
     args = parser.parse_args()
     config = Config('config.ini')
     config.task_name = args.task_name
     config.num_k = args.num_k
     config.num_gen = args.num_gen
+    config.mixup = args.mixup
+    config.epoch = args.epoch
+    config.epoch_mem = args.epoch_mem
+    config.mixup_loss_1 = args.mixup_loss_1
+    config.mixup_loss_2 = args.mixup_loss_2
+    config.SAM = args.SAM
+    config.rho = args.rho
 
     # config 
     print('#############params############')
