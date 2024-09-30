@@ -323,8 +323,12 @@ class Manager(object):
             training_data_initialize = []
             for rel in current_relations:
                 training_data_initialize += training_data[rel]
+            if self.config.SAM and self.config.SAM_type == 'current':
+                self.config.SAM = True
             self.moment.init_moment(encoder, training_data_initialize, is_memory=False)
             self.train_model(encoder, training_data_initialize)
+            if self.config.SAM and self.config.SAM_type == 'current':
+                self.config.SAM = False
 
             # Select memory samples
             for rel in current_relations:
@@ -403,6 +407,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup_loss_1", default=0.25, type=float)
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
     parser.add_argument("--SAM", action = 'store_true')
+    parser.add_arugment("--SAM_type", default="current", type=str)
     
     
     args = parser.parse_args()
@@ -416,6 +421,7 @@ if __name__ == '__main__':
     config.mixup_loss_1 = args.mixup_loss_1
     config.mixup_loss_2 = args.mixup_loss_2
     config.SAM = args.SAM
+    config.SAM_type = args.SAM_type
 
     # config 
     print('#############params############')
