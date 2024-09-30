@@ -18,7 +18,7 @@ from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, Contras
 from transformers import BertTokenizer
 from mixup import mixup_data_augmentation
 from sam import SAM
-
+import logging
 
 class Manager(object):
     def __init__(self, config) -> None:
@@ -292,6 +292,7 @@ class Manager(object):
         # sampler 
         sampler = data_sampler_CFRL(config=self.config, seed=self.config.seed)
         print('prepared data!')
+        logger.info('prepared data!')
         self.id2rel = sampler.id2rel
         self.rel2id = sampler.rel2id
         self.r2desc = self._read_description(self.config.relation_description)
@@ -312,7 +313,10 @@ class Manager(object):
             
             # Initialization
             self.moment = Moment(self.config)
-            self.config.SAM = True
+            if self.config.SAM_type == 'current':
+                self.config.SAM = True
+            if self.config.SAM_type == 'full':
+                self.config.SAM = True
             # Train current task
             training_data_initialize = []
             for rel in current_relations:
@@ -324,7 +328,8 @@ class Manager(object):
             for rel in current_relations:
                 memory_samples[rel], _ = self.select_memory(encoder, training_data[rel])
 
-            self.config.SAM = False
+            if self.config.SAM_type == 'current':
+                self.config.SAM = False
             # Data gen
             if self.config.gen == 1:
                 gen_text = []
@@ -382,6 +387,8 @@ class Manager(object):
             total_acc.append('{:.4f}'.format(ac2))
             print('cur_acc: ', cur_acc)
             print('his_acc: ', total_acc)
+            logger.info(f"cur_acc: {cur_acc}")
+            logger.info(f"his_acc: {total_acc}")
 
         torch.cuda.empty_cache()
         return total_acc_num
@@ -399,6 +406,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
     parser.add_argument("--SAM", action = 'store_true', default=False)
     parser.add_argument("--rho", default=0.05, type=float)
+    parser.add_argument("--SAM_type", default = "", type = str, help= "current for SAM in current task or full for SAM in all data")
     args = parser.parse_args()
     config = Config('config.ini')
     config.task_name = args.task_name
@@ -411,6 +419,7 @@ if __name__ == '__main__':
     config.mixup_loss_2 = args.mixup_loss_2
     config.SAM = args.SAM
     config.rho = args.rho
+    config.SAM_type = args.SAM_type
 
     # config 
     print('#############params############')
@@ -451,6 +460,34 @@ if __name__ == '__main__':
             config.valid_data = './data/CFRLTacred/CFRLdata_6_100_5_10/valid_0.txt'
             config.test_data = './data/CFRLTacred/CFRLdata_6_100_5_10/test_0.txt'        
 
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+    
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    stdout_handler.setFormatter(formatter)
+    
+    pre = ""
+    if args.mixup: pre += "mixup|"
+    if args.SAM: pre += "SAM"
+
+    file_handler = logging.FileHandler(f'CPL-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stdout_handler)
+
+    logger.info('#############params############')
+    logger.info(f'Task={config.task_name}, {config.num_k}-shot')
+    logger.info(f'Encoding model: {config.model}')
+    logger.info(f'pattern={config.pattern}')
+    logger.info(f'mem={config.memory_size}, margin={config.margin}, gen={config.gen}, gen_num={config.num_gen}')
+    logger.info('#############params############')
+
+
+  
     # seed 
     random.seed(config.seed) 
     np.random.seed(config.seed)
@@ -463,6 +500,8 @@ if __name__ == '__main__':
         config.seed = base_seed + i * 100
         print('--------Round ', i)
         print('seed: ', config.seed)
+        logger.info(f"--------Round {i}")
+        logger.info(f"seed: {config.seed}")
         manager = Manager(config)
         acc = manager.train()
         acc_list.append(acc)
@@ -472,6 +511,8 @@ if __name__ == '__main__':
     ave = np.mean(accs, axis=0)
     print('----------END')
     print('his_acc mean: ', np.around(ave, 4))
+    logger.info('----------END')
+    logger.info(f'his_acc mean: {np.around(ave, 4)}')
 
 
 

@@ -1,0 +1,1 @@
+python main.py --task tacred --shot 5 --mixup --SAM --SAM_type full

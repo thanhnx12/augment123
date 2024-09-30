@@ -19,7 +19,8 @@ from mixup import mixup_data_augmentation
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
 from torch.nn.utils import clip_grad_norm_
 from sam import SAM
-
+import logging
+import sys
 # import wandb
 
 
@@ -347,6 +348,7 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                     positives,negatives = construct_hard_triplets(prev_outputs, origin_labels, new_relation_data)
                 else:
                     positives, negatives = construct_hard_triplets(outputs, origin_labels, new_relation_data)
+                logits_all = []
 
                 for _ in range(config.f_pass):
                     output, output_embedding = dropout_layer(reps)
@@ -895,6 +897,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup", action = "store_true")
     parser.add_argument("--SAM", action = "store_true")
     parser.add_argument("--rho", default=0.05, type=float)
+    parser.add_argument("--SAM_type", default = "current", type = str)
     args = parser.parse_args()
     config = Config(args.config)
     config.step1_epochs = args.step1_epochs
@@ -904,6 +907,7 @@ if __name__ == '__main__':
     config.loss2_factor = args.loss2_factor
     config.SAM = args.SAM
     config.rho = args.rho
+    config.SAM_type = args.SAM_type
     config.device = torch.device(config.device)
     config.n_gpu = torch.cuda.device_count()
     config.batch_size_per_step = int(config.batch_size / config.gradient_accumulation_steps)
@@ -911,10 +915,11 @@ if __name__ == '__main__':
     config.task = args.task
     config.shot = args.shot
     
-    config.step1_epochs = 5
-    config.step2_epochs = 10
-    config.step3_epochs = 10
+    config.step1_epochs = args.step1_epochs
+    config.step2_epochs = args.step2_epochs
+    config.step3_epochs = args.step3_epochs
     config.temperature = 0.08
+    
 
     if config.task == "FewRel":
         config.relation_file = "data/fewrel/relation_name.txt"
@@ -953,6 +958,27 @@ if __name__ == '__main__':
             config.valid_file = "data/tacred/CFRLdata_10_100_10_10/valid_0.txt"
             config.test_file = "data/tacred/CFRLdata_10_100_10_10/test_0.txt"
 
+    
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+    
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    stdout_handler.setFormatter(formatter)
+    
+    pre = ""
+    if args.mixup: pre += "mixup|"
+    if args.SAM: pre += "SAM"
+
+    file_handler = logging.FileHandler(f'SCKD-{pre}-logs-task_{config.task}-lossfactor_{config.loss1_factor}_{config.loss1_factor}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stdout_handler)
+
+
     result_cur_test = []
     result_whole_test = []
     bwt_whole = []
@@ -987,6 +1013,7 @@ if __name__ == '__main__':
         forward_accs = []
         for steps, (training_data, valid_data, test_data, current_relations, historic_test_data, seen_relations) in enumerate(sampler):
             print(current_relations)
+            logger.info(current_relations)
 
             prev_relations = history_relations[:]
             train_data_for_initial = []
@@ -1027,8 +1054,11 @@ if __name__ == '__main__':
                 forward_acc = evaluate_strict_model(config, prev_encoder, prev_dropout_layer, classifier, test_data_1, seen_relations, map_relid2tempid)
                 forward_accs.append(forward_acc)
 
+            if config.SAM_type == 'current':
+                config.SAM = True
             train_simple_model(config, encoder, dropout_layer, classifier, train_data_for_initial, config.step1_epochs, map_relid2tempid)
             print(f"simple finished")
+            logger.info(f"simple finished")
 
 
             temp_protos = {}
@@ -1059,7 +1089,10 @@ if __name__ == '__main__':
             train_mem_model(config, encoder, dropout_layer, classifier, train_data_for_initial, config.step2_epochs, map_relid2tempid, new_relation_data,
                         prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index)
             print(f"first finished")
-
+            logger.info(f"first finished")
+            if config.SAM_type == 'current':
+                config.SAM = False
+            
             for relation in current_relations:
                 memorized_samples[relation] = select_data(config, encoder, dropout_layer, training_data[relation])
                 memory[rel2id[relation]] = select_data(config, encoder, dropout_layer, training_data[relation])
@@ -1081,11 +1114,13 @@ if __name__ == '__main__':
                 if config.mixup:
                     mixup_samples = mixup_data_augmentation(data_for_augment)
                     print("Num mixup samples", len(mixup_samples))
+                    logger.info(f"Num mixup samples: {len(mixup_samples)}")
                     train_mem_model_mixup(config, encoder, dropout_layer, classifier, mixup_samples, 2, map_relid2tempid, new_relation_data,
                                 prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index)
             train_mem_model(config, encoder, dropout_layer, classifier, train_data_for_memory, config.step3_epochs, map_relid2tempid, new_relation_data,
                         prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index)
             print(f"memory finished")
+            logger.info(f"memory finished")
             test_data_1 = []
             for relation in current_relations:
                 test_data_1 += test_data[relation]
@@ -1108,11 +1143,20 @@ if __name__ == '__main__':
             print(f'task--{steps + 1}:')
             print(f'current test acc:{cur_acc}')
             print(f'history test acc:{total_acc}')
+            
+            logger.info(f'Restart Num {rou + 1}')
+            logger.info(f'task--{steps + 1}:')
+            logger.info(f'current test acc:{cur_acc}')
+            logger.info(f'history test acc:{total_acc}')
+            
             # wandb.log({"current test acc": cur_acc, "history test acc": total_acc})
             test_cur.append(cur_acc)
             test_total.append(total_acc)
             print(test_cur)
             print(test_total)
+            logger.info(test_cur)
+            logger.info(test_total)
+            
             accuracy = []
             temp_rel2id = [rel2id[x] for x in history_relations]
             map_relid2tempid = {k: v for v, k in enumerate(temp_rel2id)}
@@ -1121,6 +1165,7 @@ if __name__ == '__main__':
                 #     evaluate_strict_model(config, encoder, classifier, data, history_relations, map_relid2tempid))
                 accuracy.append(evaluate_strict_model(config, encoder, dropout_layer, classifier, data, seen_relations, map_relid2tempid))
             print(accuracy)
+            logger.info(accuracy)
 
             prev_encoder = deepcopy(encoder)
             prev_dropout_layer = deepcopy(dropout_layer)
@@ -1130,16 +1175,26 @@ if __name__ == '__main__':
         result_whole_test.append(np.array(test_total)*100)
         print("result_whole_test")
         print(result_whole_test)
+        logger.info("result_whole_test")
+        logger.info(result_whole_test)
+        
         avg_result_cur_test = np.average(result_cur_test, 0)
         avg_result_all_test = np.average(result_whole_test, 0)
         print("avg_result_cur_test")
         print(avg_result_cur_test)
         print("avg_result_all_test")
         print(avg_result_all_test)
+        
+        logger.info("avg_result_cur_test")
+        logger.info(avg_result_cur_test)
+        logger.info("avg_result_all_test")
+        logger.info(avg_result_all_test)
         # wandb.log({"avg_result_all_test": avg_result_all_test})
         std_result_all_test = np.std(result_whole_test, 0)
         print("std_result_all_test")
         print(std_result_all_test)
+        logger.info("std_result_all_test")
+        logger.info(std_result_all_test)
         # wandb.log({"std_result_all_test": std_result_all_test})
         accuracy = []
         temp_rel2id = [rel2id[x] for x in history_relations]
@@ -1147,6 +1202,7 @@ if __name__ == '__main__':
         for data in history_data:
             accuracy.append(evaluate_strict_model(config, encoder, dropout_layer, classifier, data, history_relations, map_relid2tempid))
         print(accuracy)
+        logger.info(accuracy)
         bwt = 0.0
         for k in range(len(accuracy)-1):
             bwt += accuracy[k]-test_cur[k]
@@ -1157,11 +1213,22 @@ if __name__ == '__main__':
         print(bwt_whole)
         print("fwt_whole")
         print(fwt_whole)
+        
+        logger.info("bwt_whole")
+        logger.info(bwt_whole)
+        logger.info("fwt_whole")
+        logger.info(fwt_whole)
+        
         avg_bwt = np.average(np.array(bwt_whole))
         print("avg_bwt_whole")
         print(avg_bwt)
+        
+        logger.info("avg_bwt_whole")
+        logger.info(avg_bwt)
         avg_fwt = np.average(np.array(fwt_whole))
         print("avg_fwt_whole")
         print(avg_fwt)
+        logger.info("avg_fwt_whole")
+        logger.info(avg_fwt)
 
 

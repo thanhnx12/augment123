@@ -8,6 +8,9 @@ from data_loader import get_data_loader_BERTLLM
 from nltk import word_tokenize
 from retry import retry
 from together import Together
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class Moment:
     def __init__(self, config) -> None:
@@ -163,7 +166,7 @@ from openai import OpenAI
 
 def gpt(input, t=0, key=None):
     MAX_TRIES = 15
-    client = OpenAI(api_key='')
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     
     while MAX_TRIES > 0:
         try:

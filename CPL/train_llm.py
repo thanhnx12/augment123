@@ -11,7 +11,7 @@ from config import Config
 
 
 from sampler_bert_llm import data_sampler_CFRL
-from data_loader import get_data_loader_BERTLLM, get_data_loader_BERTLLMLLM
+from data_loader import get_data_loader_BERTLLM
 from utils_llm import Moment, gen_data
 from encoder_llm import EncodingModel_LLM2vec
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
@@ -247,7 +247,7 @@ class Manager(object):
           
     
     def eval_encoder_proto(self, encoder, seen_proto, seen_relid, test_data):
-        batch_size = 16
+        batch_size = self.config.batch_size
         test_loader = get_data_loader_BERTLLM(self.config, test_data, False, False, batch_size)
         
         corrects = 0.0
@@ -324,11 +324,13 @@ class Manager(object):
             training_data_initialize = []
             for rel in current_relations:
                 training_data_initialize += training_data[rel]
-            if self.config.SAM and self.config.SAM_type == 'current':
+            if self.config.SAM_type == 'current':
+                self.config.SAM = True
+            if self.config.SAM_type == 'full' :
                 self.config.SAM = True
             self.moment.init_moment(encoder, training_data_initialize, is_memory=False)
             self.train_model(encoder, training_data_initialize)
-            if self.config.SAM and self.config.SAM_type == 'current':
+            if self.config.SAM_type == 'current':
                 self.config.SAM = False
 
             # Select memory samples
@@ -405,12 +407,12 @@ if __name__ == '__main__':
     parser.add_argument("--num_k", default=5, type=int)
     parser.add_argument("--num_gen", default=2, type=int)
     parser.add_argument("--mixup", action = 'store_true', default=False)
-    parser.add_argument("--epoch", default=10, type=int)
-    parser.add_argument("--epoch_mem", default=5, type=int)
+    parser.add_argument("--epoch", default=8, type=int)
+    parser.add_argument("--epoch_mem", default=6, type=int)
     parser.add_argument("--mixup_loss_1", default=0.25, type=float)
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
     parser.add_argument("--SAM", action = 'store_true', default=False)
-    parser.add_argument("--SAM_type", default="current", type=str)
+    parser.add_argument("--SAM_type", default="", type=str, help="current for SAM in current task or full for SAM in all data")
     parser.add_argument("--rho", default=0.05, type=float)
     
     args = parser.parse_args()
@@ -479,7 +481,7 @@ if __name__ == '__main__':
     if args.mixup: pre += "mixup|"
     if args.SAM: pre += "SAM"
 
-    file_handler = logging.FileHandler(f'CPL-mmi-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
+    file_handler = logging.FileHandler(f'CPL-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 
