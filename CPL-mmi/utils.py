@@ -8,6 +8,10 @@ from data_loader import get_data_loader_BERT
 from nltk import word_tokenize
 from retry import retry
 import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 
 
 class Moment:
@@ -159,7 +163,7 @@ from openai import OpenAI
 
 def gpt(input, t=0, key=None):
     MAX_TRIES = 15
-    client = OpenAI(api_key='')
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     
     while MAX_TRIES > 0:
         try:
