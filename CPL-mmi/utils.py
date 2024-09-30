@@ -155,18 +155,31 @@ class Moment:
 
 
 
-# for openai
-@retry(tries=10, delay=1)
+from openai import OpenAI
+
 def gpt(input, t=0, key=None):
-    time.sleep(5)
-    openai.api_key = key
-    completion = openai.ChatCompletion.create(
-        model='gpt-3.5-turbo',
-        messages=[{"role": "user", "content": input}],
-        temperature=t
-    )
-    return completion.choices[0].message.content
+    MAX_TRIES = 15
+    client = OpenAI(api_key='')
     
+    while MAX_TRIES > 0:
+        try:
+            time.sleep(5)
+            completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": input}
+            ]
+            ,
+            temperature=t
+
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            print(e)
+            MAX_TRIES -= 1
+    print('gen failed')
+    return ''
+
 def parse(rel2id, text):
     cons = ['Relation:', 'Context:', 'Head Entity:', 'Tail Entity:']
     lens = [ len(item) for item in cons]
@@ -263,42 +276,6 @@ def gen_data(r2desc, rel2id, sample, n=10, t=0, key=None):
 
 
     return parse_output
-
-
-if __name__ == "__main__":
-    s = """## Relation: person countries of residence
-
-**Sample 1:**
-
-Context: The renowned author, Salman Rushdie, was born in Bombay, India, and now resides in the United Kingdom. 
-Head Entity: Salman Rushdie
-Tail Entity: United Kingdom
-
-**Sample 2:**
-
-Context: During his visit to Japan, President Biden met with Prime Minister Kishida to discuss economic cooperation.
-Head Entity: President Biden
-Tail Entity: Japan
-
-**Sample 3:**
-
-Context:  After her successful career in Hollywood, actress Angelina Jolie decided to move to Cambodia and dedicate her time to humanitarian work.
-Head Entity: Angelina Jolie
-Tail Entity: Cambodia
-
-**Sample 4:**
-
-Context: The renowned scientist, Albert Einstein, emigrated to the United States in 1933 to escape the Nazi regime in Germany.
-Head Entity: Albert Einstein
-Tail Entity: United States
-
-**Sample 5:**
-
-Context: The musician, Bob Marley, was born in Jamaica and spent most of his life there before moving to Miami, Florida, in the 1970s.
-Head Entity: Bob Marley
-Tail Entity: Jamaica """
-    print(parse(s))
-
 
 
 

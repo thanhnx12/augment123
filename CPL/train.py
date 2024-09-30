@@ -209,11 +209,7 @@ class Manager(object):
                 if merged_hidden.shape[1] != 768: # hard code :)
                     print('something wrong')
                     continue
-                loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
-                if torch.isnan(loss1).any() or torch.isnan(loss2).any() or torch.isnan(loss).any():
-                    print('nan loss')
-                    optimizer.zero_grad()
-                    continue
+
                 loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
                 sum_loss = 0.0
                 if not torch.isnan(loss1).any():
@@ -396,12 +392,12 @@ if __name__ == '__main__':
     parser.add_argument("--task_name", default="FewRel", type=str)
     parser.add_argument("--num_k", default=5, type=int)
     parser.add_argument("--num_gen", default=2, type=int)
-    parser.add_argument("--mixup", action = 'store_true')
+    parser.add_argument("--mixup", action = 'store_true', default=False)
     parser.add_argument("--epoch", default=10, type=int)
     parser.add_argument("--epoch_mem", default=5, type=int)
     parser.add_argument("--mixup_loss_1", default=0.25, type=float)
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
-    parser.add_argument("--SAM", action = 'store_true')
+    parser.add_argument("--SAM", action = 'store_true', default=False)
     parser.add_argument("--rho", default=0.05, type=float)
     args = parser.parse_args()
     config = Config('config.ini')

@@ -116,7 +116,7 @@ class Manager(object):
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
         if self.config.SAM:
             base_optimizer = optim.Adam
-            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=0.05, adaptive=True, lr=self.config.lr)
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
         encoder.train()
         epoch = self.config.epoch_mem if is_memory else self.config.epoch
         softmax = nn.Softmax(dim=0)
@@ -210,7 +210,7 @@ class Manager(object):
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
         if self.config.SAM:
             base_optimizer = optim.Adam
-            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=0.05, adaptive=True, lr=self.config.lr)
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
         encoder.train()
         epoch = 1
         
@@ -402,8 +402,10 @@ class Manager(object):
             training_data_initialize = []
             for rel in current_relations:
                 training_data_initialize += training_data[rel]
+            self.config.SAM = True
             self.moment.init_moment(encoder, training_data_initialize, is_memory=False)
             self.train_model(encoder, training_data_initialize)
+            self.config.SAM = False
 
             # Select memory samples
             for rel in current_relations:
@@ -479,6 +481,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup_loss_1", default=0.25, type=float)
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
     parser.add_argument("--SAM", action = 'store_true')
+    parser.add_argument("--rho", default=0.05, type=float)
     
     args = parser.parse_args()
     config = Config('config.ini')
@@ -491,6 +494,7 @@ if __name__ == '__main__':
     config.mixup_loss_1 = args.mixup_loss_1
     config.mixup_loss_2 = args.mixup_loss_2
     config.SAM = args.SAM
+    config.rho = args.rho
     
     print('#############params############')
     print(config.device)
@@ -542,7 +546,7 @@ if __name__ == '__main__':
     if args.mixup: pre += "mixup|"
     if args.SAM: pre += "SAM"
 
-    file_handler = logging.FileHandler(f'CPL-mmi-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}.log')
+    file_handler = logging.FileHandler(f'CPL-mmi-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}.log')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 
