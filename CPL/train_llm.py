@@ -11,7 +11,7 @@ from config import Config
 
 
 from sampler_bert_llm import data_sampler_CFRL
-from data_loader import get_data_loader_BERT
+from data_loader import get_data_loader_BERTLLM, get_data_loader_BERTLLMLLM
 from utils_llm import Moment, gen_data
 from encoder_llm import EncodingModel_LLM2vec
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
@@ -44,7 +44,7 @@ class Manager(object):
         '''
         only for one relation data
         '''
-        data_loader = get_data_loader_BERT(config, dataset, shuffle=False, \
+        data_loader = get_data_loader_BERTLLM(config, dataset, shuffle=False, \
             drop_last=False,  batch_size=1) 
         features = []
         encoder.eval()
@@ -62,7 +62,7 @@ class Manager(object):
         only for one relation data
         '''
         N, M = len(dataset), self.config.memory_size
-        data_loader = get_data_loader_BERT(self.config, dataset, shuffle=False, \
+        data_loader = get_data_loader_BERTLLM(self.config, dataset, shuffle=False, \
             drop_last= False, batch_size=1) # batch_size must = 1
         features = []
         encoder.eval()
@@ -99,11 +99,11 @@ class Manager(object):
         # return mem_set, features, rel_proto
         
     def train_model(self, encoder, training_data, is_memory=False):
-        data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
+        data_loader = get_data_loader_BERTLLM(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
         if self.config.SAM:
             base_optimizer = optim.Adam
-            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=0.05, adaptive=True, lr=self.config.lr)
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
         encoder.train()
         epoch = self.config.epoch_mem if is_memory else self.config.epoch
 
@@ -140,11 +140,11 @@ class Manager(object):
                 sys.stdout.flush() 
         print('')           
     def train_model_mixup(self, encoder, training_data):
-        data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
+        data_loader = get_data_loader_BERTLLM(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
         if self.config.SAM:
             base_optimizer = optim.Adam
-            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=0.05, adaptive=True, lr=self.config.lr)
+            optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
         encoder.train()
         epoch = 1
         
@@ -248,7 +248,7 @@ class Manager(object):
     
     def eval_encoder_proto(self, encoder, seen_proto, seen_relid, test_data):
         batch_size = 16
-        test_loader = get_data_loader_BERT(self.config, test_data, False, False, batch_size)
+        test_loader = get_data_loader_BERTLLM(self.config, test_data, False, False, batch_size)
         
         corrects = 0.0
         total = 0.0
@@ -410,12 +410,11 @@ if __name__ == '__main__':
     parser.add_argument("--mixup_loss_1", default=0.25, type=float)
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
     parser.add_argument("--SAM", action = 'store_true', default=False)
-
-    parser.add_arugment("--SAM_type", default="current", type=str)
-    
+    parser.add_argument("--SAM_type", default="current", type=str)
+    parser.add_argument("--rho", default=0.05, type=float)
     
     args = parser.parse_args()
-    config = Config('config.ini')
+    config = Config('config_llm.ini')
     config.task_name = args.task_name
     config.num_k = args.num_k
     config.num_gen = args.num_gen
@@ -426,6 +425,7 @@ if __name__ == '__main__':
     config.mixup_loss_2 = args.mixup_loss_2
     config.SAM = args.SAM
     config.SAM_type = args.SAM_type
+    config.rho = args.rho
 
     # config 
     print('#############params############')

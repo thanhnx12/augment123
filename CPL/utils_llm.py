@@ -4,7 +4,7 @@ import random
 import time
 import numpy as np
 import torch.nn.functional as F
-from data_loader import get_data_loader_BERT
+from data_loader import get_data_loader_BERTLLM
 from nltk import word_tokenize
 from retry import retry
 from together import Together
@@ -26,7 +26,7 @@ class Moment:
         datalen = len(dataset)
         if not is_memory:
             self.features = torch.zeros(datalen, self.config.encoder_output_size, dtype=torch.bfloat16)
-            data_loader = get_data_loader_BERT(self.config, dataset) # shuffle=False
+            data_loader = get_data_loader_BERTLLM(self.config, dataset) # shuffle=False
             lbs = []
             for step, (instance, labels, ind) in enumerate(data_loader):
                 # for k in ['ids', 'mask']:
@@ -40,7 +40,7 @@ class Moment:
         else:
             self.mem_samples = dataset
             self.mem_features = torch.zeros(datalen, self.config.encoder_output_size, dtype=torch.bfloat16)
-            data_loader = get_data_loader_BERT(self.config, dataset) # shuffle=False
+            data_loader = get_data_loader_BERTLLM(self.config, dataset) # shuffle=False
             lbs = []
             for step, (instance, labels, ind) in enumerate(data_loader):
                 for k in ['ids', 'mask']:
@@ -56,7 +56,7 @@ class Moment:
         datalen = len(dataset)
         self.mem_samples = dataset
         self.mem_features = torch.zeros(datalen , self.config.encoder_output_size, dtype=torch.bfloat16)
-        data_loader = get_data_loader_BERT(self.config, dataset) # shuffle=False
+        data_loader = get_data_loader_BERTLLM(self.config, dataset) # shuffle=False
         lbs = []
         for step, (instance, labels, ind) in enumerate(data_loader):
             # for k in ['ids', 'mask']:
@@ -86,7 +86,7 @@ class Moment:
             self.mem_features[ind] = feature
     
     def update_allmem(self, encoder):
-            data_loader = get_data_loader_BERT(self.config, self.mem_samples, batch_size=64) # shuffle=False
+            data_loader = get_data_loader_BERTLLM(self.config, self.mem_samples, batch_size=64) # shuffle=False
             for step, (instance, labels, ind) in enumerate(data_loader):
                 for k in ['ids', 'mask']:
                     instance[k] = instance[k].to(self.config.device)
