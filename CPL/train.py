@@ -14,7 +14,7 @@ from sampler import data_sampler_CFRL
 from data_loader import get_data_loader_BERT
 from utils import Moment, gen_data
 from encoder import EncodingModel
-from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss
+from add_loss import MultipleNegativesRankingFSALoss, SupervisedSimCSELoss, ContrastiveLoss
 from transformers import BertTokenizer
 from mixup import mixup_data_augmentation
 

@@ -954,6 +954,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = Config(args.config)
 
+    config.SAM = args.SAM
     config.device = torch.device(config.device)
     config.n_gpu = torch.cuda.device_count()
     config.batch_size_per_step = int(config.batch_size / config.gradient_accumulation_steps)
