@@ -46,8 +46,8 @@ class Moment:
             data_loader = get_data_loader_BERTLLM(self.config, dataset) # shuffle=False
             lbs = []
             for step, (instance, labels, ind) in enumerate(data_loader):
-                for k in ['ids', 'mask']:
-                    instance[k] = instance[k].to(self.config.device)
+                # for k in ['ids', 'mask']:
+                #     instance[k] = instance[k].to(self.config.device)
                 hidden = encoder(instance['input'])
                 fea = hidden.detach().cpu().data
                 self.update(ind, fea, is_memory)

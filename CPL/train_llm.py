@@ -16,7 +16,7 @@ from utils_llm import Moment, gen_data
 from encoder_llm import EncodingModel_LLM2vec
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
 from transformers import BertTokenizer
-from mixup import mixup_data_augmentation
+from mixup import mixup_data_augmentation_llm
 from sam import SAM
 import logging
 
@@ -154,9 +154,6 @@ class Manager(object):
         
         for i in range(epoch):
             for batch_num, (instance, labels, ind) in enumerate(data_loader):
-                for k in instance.keys():
-                    instance[k] = instance[k].to(self.config.device)
-                
                 label_first = [temp[0] for temp in labels]
                 label_second = [temp[1] for temp in labels]
                 
@@ -357,7 +354,7 @@ class Manager(object):
                 # augment data:
                 data_for_train = training_data_initialize + memory_data_initialize
                 if config.mixup:
-                    mixup_samples = mixup_data_augmentation(data_for_train)
+                    mixup_samples = mixup_data_augmentation_llm(data_for_train)
                     print('Mixup data size: ', len(mixup_samples))
                     self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True) 
                     self.train_model_mixup(encoder, mixup_samples)
