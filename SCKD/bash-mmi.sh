@@ -12,7 +12,7 @@ do
                     do
                         for n in 0.05 0.1 0.01
                         do
-                            CUDA_VISIBLE_DEVICES=0 python main.py \
+                            CUDA_VISIBLE_DEVICES=1 python main-mmi.py \
                                 --task $t \
                                 --step1_epochs $i \
                                 --step2_epochs $j \

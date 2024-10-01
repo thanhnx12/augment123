@@ -887,7 +887,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup", action = "store_true")
     parser.add_argument("--SAM", action = "store_true")
     parser.add_argument("--rho", default=0.05, type=float)
-    parser.add_argument("--SAM_type", default = "", type = str)
+    parser.add_argument("--SAM_type", default = "", type = str) # current/ full
     args = parser.parse_args()
     config = Config(args.config)
     config.step1_epochs = args.step1_epochs
@@ -960,9 +960,9 @@ if __name__ == '__main__':
     
     pre = ""
     if args.mixup: pre += "mixup|"
-    if args.SAM: pre += "SAM"
+    if args.SAM: pre += "SAM" + args.SAM_type
 
-    file_handler = logging.FileHandler(f'SCKD-{pre}-logs-task_{config.task}-lossfactor_{config.loss1_factor}_{config.loss1_factor}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
+    file_handler = logging.FileHandler(f'SCKD-{pre}-logs-task_{config.task}-shot_{config.shot}-lossfactor_{config.loss1_factor}_{config.loss2_factor}-rho_{config.rho}.log')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 

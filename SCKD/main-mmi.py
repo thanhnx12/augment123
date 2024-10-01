@@ -1027,8 +1027,14 @@ if __name__ == '__main__':
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(logging.DEBUG)
     stdout_handler.setFormatter(formatter)
+
+    pre = ""
+    if args.mixup: pre += "mixup|"
+    if args.SAM: pre += "SAM" + args.SAM_type
     
-    file_handler = logging.FileHandler(f'SCKD-mmi-mixup-logs-task_{config.task}-shot_{config.shot}-epoch_{config.step1_epochs}_{config.step2_epochs}_{config.step3_epochs}-lossfactor_{config.loss1_factor}_{config.loss2_factor}.log')
+    # file_handler = logging.FileHandler(f'SCKD-mmi-mixup-logs-task_{config.task}-shot_{config.shot}-epoch_{config.step1_epochs}_{config.step2_epochs}_{config.step3_epochs}-lossfactor_{config.loss1_factor}_{config.loss2_factor}.log')
+    file_handler = logging.FileHandler(f'SCKD-mmi-{pre}-logs-task_{config.task}-shot_{config.shot}-lossfactor_{config.loss1_factor}_{config.loss2_factor}-rho_{config.rho}.log')
+
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 
