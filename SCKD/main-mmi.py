@@ -356,13 +356,17 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                                                          torch.ones(tokens['ids'].size(0)).to(
                                                              config.device))
                 loss += hidden_distill_loss
+            
+            print(f"loss1 is {loss1.item()}, loss2 is {loss2.item()}, tri_loss is {tri_loss.item()}, infoNCE_loss is {infoNCE_loss.item()}, mlm_loss is {mlm_loss.item()}")
             if not config.SAM:
                 loss.backward()
                 losses.append(loss.item())
                 optimizer.step()
             else:
+                
                 loss.backward()
                 optimizer.first_step(zero_grad=True)
+                logits_all = []
                 
                 reps , mask_output = encoder(tokens)
                 normalized_reps_emb = F.normalize(reps.view(-1, reps.size()[1]), p=2, dim=1)
@@ -456,14 +460,13 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                                                             torch.ones(tokens['ids'].size(0)).to(
                                                                 config.device))
                     loss += hidden_distill_loss
+                    print(f"loss1 is {loss1}, loss2 is {loss2}, tri_loss is {tri_loss}, infoNCE_loss is {infoNCE_loss}, mlm_loss is {mlm_loss}")
                     
                     losses.append(loss.item())
                     loss.backward()
                     optimizer.second_step(zero_grad=True)       
-            loss.backward()
             losses.append(loss.item())
-            optimizer.step()
-        print(f"loss is {np.array(losses).mean()}")
+        # print(f"loss is {np.array(losses).mean()}")
 
 
 def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_data, epochs, map_relid2tempid, new_relation_data,
@@ -520,22 +523,7 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
             merged_reps = torch.cat([reps_first, reps_second], dim=0)
             
             #-----------------loss add 1-----------------
-            n = len(label_first)
-            new_matrix_labels = np.zeros((n, n), dtype=float)
-            new_matrix_labels_tensor = torch.tensor(new_matrix_labels).to(config.device)
-
-            # Fill the matrix according to the label comparison
-            for i1 in range(n):
-                for j in range(n):
-                    if label_first[i1] == label_second[j]:
-                        new_matrix_labels[i1][j] = 1.0
-            # loss_add1 = loss_retrieval(reps_first,reps_second, new_matrix_labels_tensor)
-            loss1 = neg_cos_sim_loss(reps_first, reps_second)
-
-            if torch.isnan(loss_add1):
-                print("loss_add1 is nan")
-                continue
-        
+            loss_add1 = neg_cos_sim_loss(reps_first, reps_second)
         
             #-----------------loss add 1-----------------
 
@@ -550,9 +538,6 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
             matrix_labels_tensor_mean_12 = torch.tensor(matrix_labels_tensor_mean_12).to(config.device)
             
             loss_add2 = loss_retrieval(reps_hidden_mean_12, reps_hidden_mean_12, matrix_labels_tensor_mean_12)
-            if torch.isnan(loss_add2):
-                print("loss_add2 is nan")
-                continue
             #-----------------loss add 2-----------------
             
             
@@ -622,7 +607,11 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                                                          torch.ones(tokens['ids'].size(0) * 2).to(
                                                              config.device))
                 loss += hidden_distill_loss
-            loss += config.loss1_factor*loss_add1 + config.loss2_factor*loss_add2
+            if not torch.isnan(loss_add1).any():
+                loss += config.loss1_factor*loss_add1
+            if not torch.isnan(loss_add2).any():
+                loss += config.loss2_factor*loss_add2
+            print(f"loss1 is {loss1.item()}, loss2 is {loss2.item()}, tri_loss is {tri_loss.item()}, loss_add1 is {loss_add1.item()}, loss_add2 is {loss_add2.item()}")
             if not config.SAM:
                 loss.backward()
                 losses.append(loss.item())
@@ -630,7 +619,7 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
             else:
                 loss.backward()
                 optimizer.first_step(zero_grad=True)
-                
+                logits_all = []
                 reps = encoder.forward_mixup(tokens) # B x 2 x 2H
                 # print(f"Rep: {reps.shape}")
                 reps_first = reps[:,0,:] # B x 2H
@@ -639,10 +628,8 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                 
                 #-----------------loss add 1-----------------
             
-                loss_add1 = loss_retrieval(reps_first,reps_second, new_matrix_labels_tensor)
-                if torch.isnan(loss_add1):
-                    print("loss_add1 is nan")
-                    continue
+                loss_add1 = neg_cos_sim_loss(reps_first, reps_second)
+
             
             
                 #-----------------loss add 1-----------------
@@ -651,9 +638,6 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                 reps_hidden_mean_12 = (reps_first + reps_second) / 2    
                 
                 loss_add2 = loss_retrieval(reps_hidden_mean_12, reps_hidden_mean_12, matrix_labels_tensor_mean_12)
-                if torch.isnan(loss_add2):
-                    print("loss_add2 is nan")
-                    continue
                 #-----------------loss add 2-----------------
                 
                 
@@ -723,12 +707,17 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                                                             torch.ones(tokens['ids'].size(0) * 2).to(
                                                                 config.device))
                     loss += hidden_distill_loss
-                loss += config.loss1_factor*loss_add1 + config.loss2_factor*loss_add2
-                
+                # loss += config.loss1_factor*loss_add1 + config.loss2_factor*loss_add2
+                if not torch.isnan(loss_add1).any():
+                    loss += config.loss1_factor*loss_add1
+                if not torch.isnan(loss_add2).any():
+                    loss += config.loss2_factor*loss_add2
+                print(f"loss1 is {loss1.item()}, loss2 is {loss2.item()}, tri_loss is {tri_loss.item()}, loss_add1 is {loss_add1.item()}, loss_add2 is {loss_add2.item()}")
+                    
                 loss.backward()
                 optimizer.second_step(zero_grad=True)
 
-            print("Loss: ", loss.item())
+            # print("Loss: ", loss.item())
             losses.append(loss.item())
         # print(f"loss is {np.array(losses).mean()}")
 
@@ -956,6 +945,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup", action = "store_true")
     parser.add_argument("--SAM", action = "store_true")
     parser.add_argument("--rho", default=0.05, type=float)
+    parser.add_argument("--SAM_type", default="", type=str, help = "full or current")
     args = parser.parse_args()
     config = Config(args.config)
     config.step1_epochs = args.step1_epochs
@@ -965,7 +955,8 @@ if __name__ == '__main__':
     config.loss2_factor = args.loss2_factor
     config.SAM = args.SAM
     config.rho = args.rho
-    
+    config.SAM_type = args.SAM_type
+    config.mixup = args.mixup
     config.device = torch.device(config.device)
     config.n_gpu = torch.cuda.device_count()
     config.batch_size_per_step = int(config.batch_size / config.gradient_accumulation_steps)
@@ -1036,7 +1027,7 @@ if __name__ == '__main__':
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(logging.DEBUG)
     stdout_handler.setFormatter(formatter)
-
+    
     file_handler = logging.FileHandler(f'SCKD-mmi-mixup-logs-task_{config.task}-shot_{config.shot}-epoch_{config.step1_epochs}_{config.step2_epochs}_{config.step3_epochs}-lossfactor_{config.loss1_factor}_{config.loss2_factor}.log')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
@@ -1126,6 +1117,8 @@ if __name__ == '__main__':
                 forward_acc = evaluate_strict_model(config, prev_encoder, prev_dropout_layer, classifier, test_data_1, seen_relations, map_relid2tempid)
                 forward_accs.append(forward_acc)
 
+            if config.SAM_type == 'current' : 
+                config.SAM = True
             train_simple_model(config, encoder, dropout_layer, classifier, train_data_for_initial, config.step1_epochs, map_relid2tempid)
             print(f"simple finished")
 
@@ -1161,6 +1154,8 @@ if __name__ == '__main__':
                         prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index , prototype=temp_protos )
             print(f"first finished")
 
+            if config.SAM_type == 'current' :
+                config.SAM = False
             for relation in current_relations:
                 memorized_samples[relation] = select_data(config, encoder, dropout_layer, training_data[relation])
                 memory[rel2id[relation]] = select_data(config, encoder, dropout_layer, training_data[relation])

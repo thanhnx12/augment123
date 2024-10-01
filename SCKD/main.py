@@ -85,7 +85,7 @@ def train_simple_model(config, encoder, dropout_layer, classifier, training_data
                 
                 loss.backward()
                 optimizer.second_step(zero_grad=True)
-        print(f"loss is {np.array(losses).mean()}")
+        # print(f"loss is {np.array(losses).mean()}")
 
 
 def compute_jsd_loss(m_input):
@@ -216,7 +216,7 @@ def train_first(config, encoder, dropout_layer, classifier, training_data, epoch
                 loss.backward()
                 optimizer.second_step(zero_grad=True)
                 
-        print(f"loss is {np.array(losses).mean()}")
+        # print(f"loss is {np.array(losses).mean()}")
 
 
 def train_mem_model(config, encoder, dropout_layer, classifier, training_data, epochs, map_relid2tempid, new_relation_data,
@@ -421,7 +421,7 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                     losses.append(loss.item())
                     loss.backward()
                     optimizer.second_step(zero_grad=True)       
-        print(f"loss is {np.array(losses).mean()}")
+        # print(f"loss is {np.array(losses).mean()}")
 
 
 def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_data, epochs, map_relid2tempid, new_relation_data,
@@ -581,7 +581,7 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                 reps_first = reps[:,0,:] # B x 2H
                 reps_second = reps[:,1,:] # B x 2H
                 merged_reps = torch.cat([reps_first, reps_second], dim=0)
-                
+                logits_all = []
                 #-----------------loss add 1-----------------
             
                 loss_add1 = neg_cos_sim_loss(reps_first, reps_second)
@@ -887,7 +887,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup", action = "store_true")
     parser.add_argument("--SAM", action = "store_true")
     parser.add_argument("--rho", default=0.05, type=float)
-    parser.add_argument("--SAM_type", default = "current", type = str)
+    parser.add_argument("--SAM_type", default = "", type = str)
     args = parser.parse_args()
     config = Config(args.config)
     config.step1_epochs = args.step1_epochs
