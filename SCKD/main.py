@@ -47,7 +47,7 @@ def train_simple_model(config, encoder, dropout_layer, classifier, training_data
                     {'params': classifier.parameters(), 'lr': 0.001}],
             base_optimizer=optim.Adam,  # Pass the Adam class, not an instance
             rho=config.rho,
-            adaptive=True
+            adaptive=False
         )
     for epoch_i in range(epochs):
         losses = []
@@ -128,97 +128,6 @@ def construct_hard_triplets(output, labels, relation_data):
 
     return positive, negative
 
-
-def train_first(config, encoder, dropout_layer, classifier, training_data, epochs, map_relid2tempid, new_relation_data):
-    data_loader = get_data_loader(config, training_data, shuffle=True)
-
-    encoder.train()
-    dropout_layer.train()
-    classifier.train()
-
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam([
-        {'params': encoder.parameters(), 'lr': 0.00001},
-        {'params': dropout_layer.parameters(), 'lr': 0.00001},
-        {'params': classifier.parameters(), 'lr': 0.001}
-    ])
-    if config.SAM:
-        base_optimizer = optim.Adam
-        optimizer = SAM(
-            params=[{'params': encoder.parameters(), 'lr': 0.00001},
-                    {'params': dropout_layer.parameters(), 'lr': 0.00001},
-                    {'params': classifier.parameters(), 'lr': 0.001}],
-            base_optimizer=optim.Adam,  # Pass the Adam class, not an instance
-            rho=config.rho,
-            adaptive=True
-        )
-    triplet_loss = nn.TripletMarginLoss(margin=1.0, p=2)
-    for epoch_i in range(epochs):
-        losses = []
-        for step, (labels, _, tokens) in enumerate(data_loader):
-            for k in tokens.keys():
-                tokens[k] = tokens[k].to(config.device) # B, {''ids', 'mask'}
-            optimizer.zero_grad()
-
-            logits_all = []
-            # tokens = torch.stack([x.to(config.device) for x in tokens], dim=0)
-            labels = labels.to(config.device)
-            origin_labels = labels[:]
-            labels = [map_relid2tempid[x.item()] for x in labels]
-            labels = torch.tensor(labels).to(config.device)
-            reps = encoder(tokens)
-            outputs,_ = dropout_layer(reps)
-            positives,negatives = construct_hard_triplets(outputs, origin_labels, new_relation_data)
-
-            for _ in range(config.f_pass):
-                output, output_embedding = dropout_layer(reps)
-                logits = classifier(output)
-                logits_all.append(logits)
-
-            positives = torch.cat(positives, 0).to(config.device)
-            negatives = torch.cat(negatives, 0).to(config.device)
-            anchors = outputs
-            logits_all = torch.stack(logits_all)
-            m_labels = labels.expand((config.f_pass, labels.shape[0]))  # m,B
-            loss1 = criterion(logits_all.reshape(-1, logits_all.shape[-1]), m_labels.reshape(-1))
-            loss2 = compute_jsd_loss(logits_all)
-            tri_loss = triplet_loss(anchors, positives, negatives)
-            loss = loss1 + loss2 + tri_loss
-
-            if not config.SAM:
-                loss.backward()
-                losses.append(loss.item())
-                optimizer.step()
-                
-            else:
-                loss.backward()
-                optimizer.first_step(zero_grad=True)
-                reps = encoder(tokens)
-                outputs,_ = dropout_layer(reps)
-                positives,negatives = construct_hard_triplets(outputs, origin_labels, new_relation_data)
-
-                for _ in range(config.f_pass):
-                    output, output_embedding = dropout_layer(reps)
-                    logits = classifier(output)
-                    logits_all.append(logits)
-
-                positives = torch.cat(positives, 0).to(config.device)
-                negatives = torch.cat(negatives, 0).to(config.device)
-                anchors = outputs
-                logits_all = torch.stack(logits_all)
-                m_labels = labels.expand((config.f_pass, labels.shape[0]))  # m,B
-                loss1 = criterion(logits_all.reshape(-1, logits_all.shape[-1]), m_labels.reshape(-1))
-                loss2 = compute_jsd_loss(logits_all)
-                tri_loss = triplet_loss(anchors, positives, negatives)
-                loss = loss1 + loss2 + tri_loss
-                
-                losses.append(loss.item())
-                loss.backward()
-                optimizer.second_step(zero_grad=True)
-                
-        # print(f"loss is {np.array(losses).mean()}")
-
-
 def train_mem_model(config, encoder, dropout_layer, classifier, training_data, epochs, map_relid2tempid, new_relation_data,
                 prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index , prototype = None ):
     data_loader = get_data_loader(config, training_data, shuffle=True)
@@ -231,17 +140,17 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
     optimizer = optim.Adam([
         {'params': encoder.parameters(), 'lr': 0.00001},
         {'params': dropout_layer.parameters(), 'lr': 0.00001},
-        {'params': classifier.parameters(), 'lr': 0.001}
+        {'params': classifier.parameters(), 'lr': 0.0001}
     ])
     if config.SAM:
         base_optimizer = optim.Adam
         optimizer = SAM(
             params=[{'params': encoder.parameters(), 'lr': 0.00001},
                     {'params': dropout_layer.parameters(), 'lr': 0.00001},
-                    {'params': classifier.parameters(), 'lr': 0.001}],
+                    {'params': classifier.parameters(), 'lr': 0.0001}],
             base_optimizer=optim.Adam,  # Pass the Adam class, not an instance
-            rho=0.05,
-            adaptive=True
+            rho=0.01,
+            adaptive=False
         )
         
     triplet_loss = nn.TripletMarginLoss(margin=1.0, p=2)
@@ -341,6 +250,9 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                 optimizer.step()
             else:
                 loss.backward()
+                clip_grad_norm_(encoder.parameters(), 1.0)
+                clip_grad_norm_(classifier.parameters(), 1.0)
+                clip_grad_norm_(dropout_layer.parameters(), 1.0)                
                 optimizer.first_step(zero_grad=True)
                 
                 reps  = encoder(tokens)
@@ -371,8 +283,10 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                 
                 print("loss1_: ", loss1.item(), "loss2_: ", loss2.item(), "tri_loss_: ", tri_loss.item())
                 
-                
+                # gradient clipping
                 loss = loss1 + loss2 + tri_loss 
+                
+                
                 # wandb.log({"loss1": loss1, "loss2": loss2, "tri_loss": tri_loss, "infoNCE_loss": infoNCE_loss , "mlm_loss": mlm_loss})
                 
                 if prev_encoder is not None:
@@ -420,10 +334,13 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                     
                     losses.append(loss.item())
                     loss.backward()
+                    clip_grad_norm_(encoder.parameters(), 1.0)
+                    clip_grad_norm_(classifier.parameters(), 1.0)
+                    clip_grad_norm_(dropout_layer.parameters(), 1.0)                    
                     optimizer.second_step(zero_grad=True)       
-        # print(f"loss is {np.array(losses).mean()}")
-
-
+                
+                    # origin_labels = labels[:]
+               
 def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_data, epochs, map_relid2tempid, new_relation_data,
                 prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index):
     data_loader = get_data_loader(config, training_data, shuffle=True)
@@ -446,7 +363,7 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                     {'params': classifier.parameters(), 'lr': 0.001}],
             base_optimizer=base_optimizer,  # Pass the Adam class, not an instance
             rho=config.rho,
-            adaptive=True
+            adaptive=False
         )
     triplet_loss = nn.TripletMarginLoss(margin=1.0, p=2)
     distill_criterion = nn.CosineEmbeddingLoss()
@@ -887,7 +804,7 @@ if __name__ == '__main__':
     parser.add_argument("--mixup", action = "store_true")
     parser.add_argument("--SAM", action = "store_true")
     parser.add_argument("--rho", default=0.05, type=float)
-    parser.add_argument("--SAM_type", default = "", type = str) # current/ full
+    parser.add_argument("--SAM_type", default = "", type = str)
     args = parser.parse_args()
     config = Config(args.config)
     config.step1_epochs = args.step1_epochs
@@ -910,6 +827,10 @@ if __name__ == '__main__':
     config.step2_epochs = args.step2_epochs
     config.step3_epochs = args.step3_epochs
     config.temperature = 0.08
+    
+    # sckd
+    config.pattern = 'entity_marker'
+    
     
 
     if config.task == "FewRel":
@@ -960,9 +881,9 @@ if __name__ == '__main__':
     
     pre = ""
     if args.mixup: pre += "mixup|"
-    if args.SAM: pre += "SAM" + args.SAM_type
+    if args.SAM: pre += "SAM"
 
-    file_handler = logging.FileHandler(f'SCKD-{pre}-logs-task_{config.task}-shot_{config.shot}-lossfactor_{config.loss1_factor}_{config.loss2_factor}-rho_{config.rho}.log')
+    file_handler = logging.FileHandler(f'SCKD-{pre}-logs-task_{config.task}-lossfactor_{config.loss1_factor}_{config.loss1_factor}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 

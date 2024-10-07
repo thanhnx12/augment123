@@ -157,7 +157,7 @@ class Manager(object):
                 label_first = [temp[0] for temp in labels]
                 label_second = [temp[1] for temp in labels]
                 
-                mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+                mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance['input'])
                 n = len(label_first)
                 m = len(label_second)
                 new_matrix_labels = np.zeros((n, m), dtype=float)
@@ -188,7 +188,7 @@ class Manager(object):
                 merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
                 
     
-                if merged_hidden.shape[1] != 768: # hard code :)
+                if merged_hidden.shape[1] != 4096: # hard code :)
                     print('something wrong')
                     logger.info('something wrong')
                     continue
@@ -210,7 +210,7 @@ class Manager(object):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.first_step(zero_grad=True)
-                    mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+                    mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance['input'])
                     loss1 = neg_cos_sim_loss(mask_hidden_1, mask_hidden_2)
                     mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
                     loss2 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
@@ -220,7 +220,7 @@ class Manager(object):
                     merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
                     
         
-                    if merged_hidden.shape[1] != 768: # hard code :)
+                    if merged_hidden.shape[1] != 4096: # hard code :)
                         print('something wrong')
                         logger.info("something wrong")
                         continue
@@ -478,7 +478,7 @@ if __name__ == '__main__':
     if args.mixup: pre += "mixup|"
     if args.SAM: pre += "SAM"
 
-    file_handler = logging.FileHandler(f'CPL-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
+    file_handler = logging.FileHandler(f'CPL-LLM-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}-SAM_type_{config.SAM_type}-lr_{config.lr}.log')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 

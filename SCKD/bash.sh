@@ -1,29 +1,22 @@
-for t in FewRel tacred
+for t in FewRel
 do
-    for i in 5
+    for i in 5 10
     do
-        for j in 10
+        for j in 10 5
         do
-            for k in 10
+            for k in 10 5
             do
                 for l in 0.5 0.75 1
                 do
                     for m in 0.5 0.75 1
                     do
-                        for n in 0.05 0.1 0.01
-                        do
-                            CUDA_VISIBLE_DEVICES=0 python main.py \
-                                --task $t \
-                                --step1_epochs $i \
-                                --step2_epochs $j \
-                                --step3_epochs $k \
-                                --loss1_factor $l \
-                                --loss2_factor $m \
-                                --mixup \
-                                --SAM \
-                                --rho $n \
-                                --SAM_type full
-                        done
+                        CUDA_VISIBLE_DEVICES=0 python main.py \
+                            --task $t \
+                            --step1-epochs $i \
+                            --step2-epochs $j \
+                            --step3-epochs $k \
+                            --loss1-factor $l \
+                            --loss2-factor $m
                     done
                 done
             done
