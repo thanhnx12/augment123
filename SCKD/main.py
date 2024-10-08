@@ -249,7 +249,95 @@ def train_mem_model(config, encoder, dropout_layer, classifier, training_data, e
                 losses.append(loss.item())
                 optimizer.step()
             else:
-                raise NotImplementedError
+                loss.backward()
+                clip_grad_norm_(encoder.parameters(), 1.0)
+                clip_grad_norm_(classifier.parameters(), 1.0)
+                clip_grad_norm_(dropout_layer.parameters(), 1.0)                
+                optimizer.first_step(zero_grad=True)
+                
+                reps  = encoder(tokens)
+                normalized_reps_emb = F.normalize(reps.view(-1, reps.size()[1]), p=2, dim=1)
+                outputs,_ = dropout_layer(reps)
+                # origin_labels = labels[:]
+                
+                if prev_dropout_layer is not None:
+                    prev_outputs, _= prev_dropout_layer(reps)
+                    positives, negatives = construct_hard_triplets(prev_outputs, origin_labels, new_relation_data)
+                else:
+                    positives, negatives = construct_hard_triplets(outputs, origin_labels, new_relation_data)
+                logits_all = []
+
+                for _ in range(config.f_pass):
+                    output, output_embedding = dropout_layer(reps)
+                    logits = classifier(output)
+                    logits_all.append(logits)
+
+                positives = torch.cat(positives, 0).to(config.device)
+                negatives = torch.cat(negatives, 0).to(config.device)
+                anchors = outputs
+                logits_all = torch.stack(logits_all)
+                m_labels = labels.expand((config.f_pass, labels.shape[0]))  # m,B
+                loss1 = criterion(logits_all.reshape(-1, logits_all.shape[-1]), m_labels.reshape(-1))
+                loss2 = compute_jsd_loss(logits_all)
+                tri_loss = triplet_loss(anchors, positives, negatives)
+                
+                print("loss1_: ", loss1.item(), "loss2_: ", loss2.item(), "tri_loss_: ", tri_loss.item())
+                
+                # gradient clipping
+                loss = loss1 + loss2 + tri_loss 
+                
+                
+                # wandb.log({"loss1": loss1, "loss2": loss2, "tri_loss": tri_loss, "infoNCE_loss": infoNCE_loss , "mlm_loss": mlm_loss})
+                
+                if prev_encoder is not None:
+                    prev_reps = prev_encoder(tokens)
+                    prev_reps.detach()
+                    normalized_prev_reps_emb = F.normalize(prev_reps.view(-1, prev_reps.size()[1]), p=2, dim=1)
+
+                    feature_distill_loss = distill_criterion(normalized_reps_emb, normalized_prev_reps_emb,
+                                                            torch.ones(tokens['ids'].size(0)).to(
+                                                                config.device))
+                    loss += feature_distill_loss
+
+                if prev_dropout_layer is not None and prev_classifier is not None:
+                    prediction_distill_loss = None
+                    dropout_output_all = []
+                    prev_dropout_output_all = []
+                    for i in range(config.f_pass):
+                        output, _ = dropout_layer(reps)
+                        prev_output, _ = prev_dropout_layer(reps)
+                        dropout_output_all.append(output)
+                        prev_dropout_output_all.append(output)
+                        pre_logits = prev_classifier(output).detach()
+
+                        pre_logits = F.softmax(pre_logits.index_select(1, prev_relation_index) / T, dim=1)
+
+                        log_logits = F.log_softmax(logits_all[i].index_select(1, prev_relation_index) / T, dim=1)
+                        if i == 0:
+                            prediction_distill_loss = -torch.mean(torch.sum(pre_logits * log_logits, dim=1))
+                        else:
+                            prediction_distill_loss += -torch.mean(torch.sum(pre_logits * log_logits, dim=1))
+
+                    prediction_distill_loss /= config.f_pass
+                    loss += prediction_distill_loss
+                    dropout_output_all = torch.stack(dropout_output_all)
+                    prev_dropout_output_all = torch.stack(prev_dropout_output_all)
+                    mean_dropout_output_all = torch.mean(dropout_output_all, dim=0)
+                    mean_prev_dropout_output_all = torch.mean(prev_dropout_output_all,dim=0)
+                    normalized_output = F.normalize(mean_dropout_output_all.view(-1, mean_dropout_output_all.size()[1]), p=2, dim=1)
+                    normalized_prev_output = F.normalize(mean_prev_dropout_output_all.view(-1, mean_prev_dropout_output_all.size()[1]), p=2, dim=1)
+                    hidden_distill_loss = distill_criterion(normalized_output, normalized_prev_output,
+                                                            torch.ones(tokens['ids'].size(0)).to(
+                                                                config.device))
+                    loss += hidden_distill_loss
+                    print("prediction_distill_loss_: ", prediction_distill_loss.item(), "hidden_distill_loss_: ", hidden_distill_loss.item())
+                    
+                    losses.append(loss.item())
+                    loss.backward()
+                    clip_grad_norm_(encoder.parameters(), 1.0)
+                    clip_grad_norm_(classifier.parameters(), 1.0)
+                    clip_grad_norm_(dropout_layer.parameters(), 1.0)                    
+                    optimizer.second_step(zero_grad=True)       
                 
                     # origin_labels = labels[:]
                
@@ -402,7 +490,106 @@ def train_mem_model_mixup(config, encoder, dropout_layer, classifier, training_d
                 losses.append(loss.item())
                 optimizer.step()
             else:
-                raise NotImplementedError
+                loss.backward()
+                optimizer.first_step(zero_grad=True)
+                
+                reps = encoder.forward_mixup(tokens) # B x 2 x 2H
+                # print(f"Rep: {reps.shape}")
+                reps_first = reps[:,0,:] # B x 2H
+                reps_second = reps[:,1,:] # B x 2H
+                merged_reps = torch.cat([reps_first, reps_second], dim=0)
+                logits_all = []
+                #-----------------loss add 1-----------------
+            
+                loss_add1 = neg_cos_sim_loss(reps_first, reps_second)
+
+            
+            
+                #-----------------loss add 1-----------------
+
+                #-----------------loss add 2-----------------
+                reps_hidden_mean_12 = (reps_first + reps_second) / 2    
+                loss_add2 = loss_retrieval(reps_hidden_mean_12, reps_hidden_mean_12, matrix_labels_tensor_mean_12)
+
+                #-----------------loss add 2-----------------
+                
+                
+                normalized_reps_emb = F.normalize(merged_reps.view(-1, merged_reps.size()[1]), p=2, dim=1)
+                outputs,_ = dropout_layer(merged_reps)
+                if prev_dropout_layer is not None:
+                    prev_outputs, _ = prev_dropout_layer(merged_reps)
+                    positives,negatives = construct_hard_triplets(prev_outputs, origin_labels, new_relation_data)
+                else:
+                    positives, negatives = construct_hard_triplets(outputs, origin_labels, new_relation_data)
+
+                for _ in range(config.f_pass):
+                    output, output_embedding = dropout_layer(merged_reps)
+                    logits = classifier(output)
+                    logits_all.append(logits)
+
+                positives = torch.cat(positives, 0).to(config.device)
+                negatives = torch.cat(negatives, 0).to(config.device)
+                anchors = outputs
+                logits_all = torch.stack(logits_all)
+                m_labels = merged_labels.expand((config.f_pass, merged_labels.shape[0]))  # m,B
+                loss1 = criterion(logits_all.reshape(-1, logits_all.shape[-1]), m_labels.reshape(-1))
+                loss2 = compute_jsd_loss(logits_all)
+                tri_loss = triplet_loss(anchors, positives, negatives)
+                loss = loss1 + loss2 + tri_loss
+
+                if prev_encoder is not None:
+                    prev_reps = prev_encoder.forward_mixup(tokens).detach() # B x 2 x 2H
+                    prev_reps_first = prev_reps[:,0,:]
+                    prev_reps_second = prev_reps[:,1,:]
+                    merged_prev_reps = torch.cat([prev_reps_first, prev_reps_second], dim=0)
+                    normalized_prev_reps_emb = F.normalize(merged_prev_reps.view(-1, merged_prev_reps.size()[1]), p=2, dim=1)
+
+                    feature_distill_loss = distill_criterion(normalized_reps_emb, normalized_prev_reps_emb,
+                                                            torch.ones(tokens['ids'].size(0) * 2).to(
+                                                                config.device))
+                    loss += feature_distill_loss
+
+                if prev_dropout_layer is not None and prev_classifier is not None:
+                    prediction_distill_loss = None
+                    dropout_output_all = []
+                    prev_dropout_output_all = []
+                    for i in range(config.f_pass):
+                        output, _ = dropout_layer(merged_reps)
+                        prev_output, _ = prev_dropout_layer(merged_reps)
+                        dropout_output_all.append(output)
+                        prev_dropout_output_all.append(output)
+                        pre_logits = prev_classifier(output).detach()
+
+                        pre_logits = F.softmax(pre_logits.index_select(1, prev_relation_index) / T, dim=1)
+
+                        log_logits = F.log_softmax(logits_all[i].index_select(1, prev_relation_index) / T, dim=1)
+                        if i == 0:
+                            prediction_distill_loss = -torch.mean(torch.sum(pre_logits * log_logits, dim=1))
+                        else:
+                            prediction_distill_loss += -torch.mean(torch.sum(pre_logits * log_logits, dim=1))
+
+                    prediction_distill_loss /= config.f_pass
+                    loss += prediction_distill_loss
+                    dropout_output_all = torch.stack(dropout_output_all)
+                    prev_dropout_output_all = torch.stack(prev_dropout_output_all)
+                    mean_dropout_output_all = torch.mean(dropout_output_all, dim=0)
+                    mean_prev_dropout_output_all = torch.mean(prev_dropout_output_all,dim=0)
+                    normalized_output = F.normalize(mean_dropout_output_all.view(-1, mean_dropout_output_all.size()[1]), p=2, dim=1)
+                    normalized_prev_output = F.normalize(mean_prev_dropout_output_all.view(-1, mean_prev_dropout_output_all.size()[1]), p=2, dim=1)
+                    hidden_distill_loss = distill_criterion(normalized_output, normalized_prev_output,
+                                                            torch.ones(tokens['ids'].size(0) * 2).to(
+                                                                config.device))
+                    loss += hidden_distill_loss
+                if not torch.isnan(loss_add1).any():
+                    loss += config.loss1_factor*loss_add1
+                if not torch.isnan(loss_add2).any():
+                    loss += config.loss2_factor*loss_add2
+                print("loss1_: ", loss1.item(), "loss2_: ", loss2.item(), "tri_loss_: ", tri_loss.item(), "loss_add1: ", loss_add1.item(), "loss_add2: ", loss_add2.item(), "feature_distill_loss: ", feature_distill_loss.item(), "prediction_distill_loss: ", prediction_distill_loss.item(), "hidden_distill_loss: ", hidden_distill_loss.item())
+                loss.backward()
+                optimizer.second_step(zero_grad=True)
+
+            print("Loss: ", loss.item(), loss_add1.item(), loss_add2.item())
+            losses.append(loss.item())
         # print(f"loss is {np.array(losses).mean()}")
 
 
@@ -781,13 +968,11 @@ if __name__ == '__main__':
 
             if config.SAM_type == 'current':
                 config.SAM = True
-            train_simple_model(config, encoder, dropout_layer, classifier, train_data_for_initial, 2, map_relid2tempid)
+            train_simple_model(config, encoder, dropout_layer, classifier, train_data_for_initial, config.step1_epochs, map_relid2tempid)
             print(f"simple finished")
+            logger.info(f"simple finished")
             if config.SAM_type == 'current':
                 config.SAM = False
-            train_simple_model(config, encoder, dropout_layer, classifier, train_data_for_initial, config.step1_epochs, map_relid2tempid)
-            
-            logger.info(f"simple finished")
 
 
             temp_protos = {}
@@ -819,7 +1004,6 @@ if __name__ == '__main__':
                         prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index)
             print(f"first finished")
             logger.info(f"first finished")
-
             
             for relation in current_relations:
                 memorized_samples[relation] = select_data(config, encoder, dropout_layer, training_data[relation])
