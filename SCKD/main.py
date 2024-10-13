@@ -970,9 +970,9 @@ if __name__ == '__main__':
                 config.SAM = True
             train_simple_model(config, encoder, dropout_layer, classifier, train_data_for_initial, config.step1_epochs, map_relid2tempid)
             print(f"simple finished")
-            logger.info(f"simple finished")
             if config.SAM_type == 'current':
                 config.SAM = False
+            logger.info(f"simple finished")
 
 
             temp_protos = {}
@@ -1004,6 +1004,7 @@ if __name__ == '__main__':
                         prev_encoder, prev_dropout_layer, prev_classifier, prev_relation_index)
             print(f"first finished")
             logger.info(f"first finished")
+
             
             for relation in current_relations:
                 memorized_samples[relation] = select_data(config, encoder, dropout_layer, training_data[relation])

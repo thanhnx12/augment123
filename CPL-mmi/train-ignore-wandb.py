@@ -465,6 +465,9 @@ class Manager(object):
             print('his_acc: ', total_acc)
             logger.info(f"cur_acc: {cur_acc}")
             logger.info(f"his_acc: {total_acc}")
+        
+        # save model
+        torch.save(encoder.state_dict(), f'CPL-mmi-{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}.pt')
 
         torch.cuda.empty_cache()
         return total_acc_num

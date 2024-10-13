@@ -427,6 +427,9 @@ class EncodingModel_LLM2vec(nn.Module):
             skip_instruction = False,
             
         )
+        # merge LoRA of encoder
+
+        
         self.encoder.model = self.initialize_peft(
             self.encoder.model,
         )
@@ -440,8 +443,8 @@ class EncodingModel_LLM2vec(nn.Module):
     def initialize_peft(
         self,
         model,
-        lora_r: int = 8,
-        lora_alpha: int = 16,
+        lora_r: int = 64,
+        lora_alpha: int = 128,
         lora_dropout: float = 0.05,
         lora_modules: Optional[List[str]] = None,
     ):

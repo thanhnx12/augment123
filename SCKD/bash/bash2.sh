@@ -12,11 +12,11 @@ do
                     do
                         CUDA_VISIBLE_DEVICES=0 python main.py \
                             --task $t \
-                            --step1-epochs $i \
-                            --step2-epochs $j \
-                            --step3-epochs $k \
-                            --loss1-factor $l \
-                            --loss2-factor $m \
+                            --step1_epochs $i \
+                            --step2_epochs $j \
+                            --step3_epochs $k \
+                            --loss1_factor $l \
+                            --loss2_factor $m \
                             --mixup \
                             --SAM \
                             --SAM_type current

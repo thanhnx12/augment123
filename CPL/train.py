@@ -10,15 +10,16 @@ from sklearn.cluster import KMeans
 from config import Config
 
 
-from sampler import data_sampler_CFRL
-from data_loader import get_data_loader_BERT
-from utils import Moment, gen_data
-from encoder import EncodingModel
+from sampler_bert_llm import data_sampler_CFRL
+from data_loader import get_data_loader_BERTLLM
+from utils_llm import Moment, gen_data
+from encoder_llm import EncodingModel_LLM2vec
 from add_loss import MultipleNegativesRankingLoss, SupervisedSimCSELoss, ContrastiveLoss, NegativeCosSimLoss
 from transformers import BertTokenizer
-from mixup import mixup_data_augmentation
+from mixup import mixup_data_augmentation_llm
 from sam import SAM
 import logging
+
 
 class Manager(object):
     def __init__(self, config) -> None:
@@ -43,14 +44,12 @@ class Manager(object):
         '''
         only for one relation data
         '''
-        data_loader = get_data_loader_BERT(config, dataset, shuffle=False, \
+        data_loader = get_data_loader_BERTLLM(config, dataset, shuffle=False, \
             drop_last=False,  batch_size=1) 
         features = []
         encoder.eval()
         for step, (instance, label, idx) in enumerate(data_loader):
-            for k in instance.keys():
-                instance[k] = instance[k].to(self.config.device)
-            hidden = encoder(instance) 
+            hidden = encoder(instance['input']).float()
             fea = hidden.detach().cpu().data # (1, H)
             features.append(fea)    
         features = torch.cat(features, dim=0) # (M, H)
@@ -63,14 +62,12 @@ class Manager(object):
         only for one relation data
         '''
         N, M = len(dataset), self.config.memory_size
-        data_loader = get_data_loader_BERT(self.config, dataset, shuffle=False, \
+        data_loader = get_data_loader_BERTLLM(self.config, dataset, shuffle=False, \
             drop_last= False, batch_size=1) # batch_size must = 1
         features = []
         encoder.eval()
         for step, (instance, label, idx) in enumerate(data_loader):
-            for k in instance.keys():
-                instance[k] = instance[k].to(self.config.device)
-            hidden = encoder(instance) 
+            hidden = encoder(instance['input']).float()
             fea = hidden.detach().cpu().data # (1, H)
             features.append(fea)
 
@@ -100,44 +97,34 @@ class Manager(object):
 
         return mem_set, mem_feas
         # return mem_set, features, rel_proto
-
-    
+        
     def train_model(self, encoder, training_data, is_memory=False):
-        data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
+        data_loader = get_data_loader_BERTLLM(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
         if self.config.SAM:
             base_optimizer = optim.Adam
             optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
-            
         encoder.train()
         epoch = self.config.epoch_mem if is_memory else self.config.epoch
-        
-        loss_retrieval = MultipleNegativesRankingLoss()
-        supervised_simcse_loss = SupervisedSimCSELoss()
-        
-        
+
         for i in range(epoch):
             for batch_num, (instance, labels, ind) in enumerate(data_loader):
-                for k in instance.keys():
-                    instance[k] = instance[k].to(self.config.device)
-                hidden = encoder(instance)
-                
-                loss = self.moment.contrastive_loss(hidden, labels, is_memory)
-                # print("Losses: ", loss, loss2, loss3, loss4, simcse_loss)
-                loss = loss
-                # + loss3 + 0.5*loss4
+                hidden = encoder(instance['input'])
+                loss = self.moment.contrastive_loss(hidden, labels, is_memory)    
                 if not self.config.SAM:
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
+                    optimizer.zero_grad()
                 else:
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.first_step(zero_grad=True)
-                    
-                    self.moment.contrastive_loss(encoder(instance), labels, is_memory).backward()
+                    hidden = encoder(instance['input'])
+                    loss = self.moment.contrastive_loss(hidden, labels, is_memory)
+                    loss.backward()
                     optimizer.second_step(zero_grad=True)
-                # update moment
+                    # update moment
                 if is_memory:
                     self.moment.update(ind, hidden.detach().cpu().data, is_memory=True)
                     # self.moment.update_allmem(encoder)
@@ -146,36 +133,31 @@ class Manager(object):
                 # print
                 if is_memory:
                     sys.stdout.write('MemoryTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
+                    # logger.info('MemoryTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()))
                 else:
                     sys.stdout.write('CurrentTrain: epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
+                    # logger.info('CurrentTrain: epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()))
                 sys.stdout.flush() 
-        print('')             
+        print('')           
     def train_model_mixup(self, encoder, training_data):
-        data_loader = get_data_loader_BERT(self.config, training_data, shuffle=True)
+        data_loader = get_data_loader_BERTLLM(self.config, training_data, shuffle=True)
         optimizer = optim.Adam(params=encoder.parameters(), lr=self.config.lr)
         if self.config.SAM:
             base_optimizer = optim.Adam
             optimizer = SAM(params=encoder.parameters(), base_optimizer=base_optimizer, rho=self.config.rho, adaptive=True, lr=self.config.lr)
-            
         encoder.train()
-        epoch = 1
+        epoch = 2
         
         loss_retrieval = MultipleNegativesRankingLoss()
-        supervised_simcse_loss = SupervisedSimCSELoss()
-        contrastive_loss = ContrastiveLoss()
         neg_cos_sim_loss = NegativeCosSimLoss()
-        # Set the maximum gradient norm for clipping
-        max_grad_norm = 10.0  # You can adjust this value as needed
+        
         
         for i in range(epoch):
             for batch_num, (instance, labels, ind) in enumerate(data_loader):
-                for k in instance.keys():
-                    instance[k] = instance[k].to(self.config.device)
-                
                 label_first = [temp[0] for temp in labels]
                 label_second = [temp[1] for temp in labels]
                 
-                mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+                mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance['input'])
                 n = len(label_first)
                 m = len(label_second)
                 new_matrix_labels = np.zeros((n, m), dtype=float)
@@ -187,8 +169,8 @@ class Manager(object):
                             new_matrix_labels[i1][j] = 1.0
 
                 new_matrix_labels_tensor = torch.tensor(new_matrix_labels).to(config.device)
-                # loss1 = loss_retrieval(mask_hidden_1, mask_hidden_2, new_matrix_labels_tensor)
                 loss1 = neg_cos_sim_loss(mask_hidden_1, mask_hidden_2)
+                
                 mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
                 
                 matrix_labels_tensor_mean_12 = np.zeros((mask_hidden_mean_12.shape[0], mask_hidden_mean_12.shape[0]), dtype=float)
@@ -206,10 +188,10 @@ class Manager(object):
                 merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
                 
     
-                if merged_hidden.shape[1] != 768: # hard code :)
+                if merged_hidden.shape[1] != 4096: # hard code :)
                     print('something wrong')
+                    logger.info('something wrong')
                     continue
-
                 loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
                 sum_loss = 0.0
                 if not torch.isnan(loss1).any():
@@ -218,36 +200,58 @@ class Manager(object):
                     sum_loss += self.config.mixup_loss_2*loss2
                 if not torch.isnan(loss).any():
                     sum_loss += 0.5*loss
+                
                 if not self.config.SAM:
                     optimizer.zero_grad()
                     sum_loss.backward()
                     optimizer.step()
+                    optimizer.zero_grad()
                 else:
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.first_step(zero_grad=True)
-                    mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance)
+                    mask_hidden_1, mask_hidden_2 = encoder.forward_mixup(instance['input'])
+                    loss1 = neg_cos_sim_loss(mask_hidden_1, mask_hidden_2)
+                    mask_hidden_mean_12 = (mask_hidden_1 + mask_hidden_2) / 2
+                    loss2 = loss_retrieval(mask_hidden_mean_12, mask_hidden_mean_12, matrix_labels_tensor_mean_12)
+                    
+                    
                     merged_hidden = torch.cat((mask_hidden_1, mask_hidden_2), dim=0)
-                    self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True).backward()
-                    optimizer.second_step(zero_grad=True)
-                
-                self.moment.update(ind, mask_hidden_1.detach().cpu().data, is_memory=True)
-                # print
-                sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, loss.item()) + '\r')
-                sys.stdout.flush() 
-        print('')                         
+                    merged_labels = torch.cat((torch.tensor(label_first), torch.tensor(label_second)), dim=0)
+                    
         
+                    if merged_hidden.shape[1] != 4096: # hard code :)
+                        print('something wrong')
+                        logger.info("something wrong")
+                        continue
+                    loss = self.moment.contrastive_loss(merged_hidden, merged_labels, is_memory = True)
+                    sum_loss = 0.0
+                    if not torch.isnan(loss1).any():
+                        sum_loss += self.config.mixup_loss_1*loss1
+                    if not torch.isnan(loss2).any():
+                        sum_loss += self.config.mixup_loss_2*loss2
+                    if not torch.isnan(loss).any():
+                        sum_loss += 0.5*loss
+                    sum_loss.backward()
+                    optimizer.second_step(zero_grad=True)
+                    
+                        
+                self.moment.update(ind, mask_hidden_1.detach().cpu().data, is_memory=True)
+                sys.stdout.write('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, sum_loss.item()) + '\r')
+                # logger.info('MixupTrain:  epoch {0:2}, batch {1:5} | loss: {2:2.7f}'.format(i, batch_num, sum_loss.item()))
+                sys.stdout.flush() 
+        print('')             
+          
+    
     def eval_encoder_proto(self, encoder, seen_proto, seen_relid, test_data):
-        batch_size = 16
-        test_loader = get_data_loader_BERT(self.config, test_data, False, False, batch_size)
+        batch_size = self.config.batch_size
+        test_loader = get_data_loader_BERTLLM(self.config, test_data, False, False, batch_size)
         
         corrects = 0.0
         total = 0.0
         encoder.eval()
         for batch_num, (instance, label, _) in enumerate(test_loader):
-            for k in instance.keys():
-                instance[k] = instance[k].to(self.config.device)
-            hidden = encoder(instance)
+            hidden = encoder(instance['input']).float()
             fea = hidden.cpu().data # place in cpu to eval
             logits = -self._edist(fea, seen_proto) # (B, N) ;N is the number of seen relations
 
@@ -298,7 +302,7 @@ class Manager(object):
         self.r2desc = self._read_description(self.config.relation_description)
 
         # encoder
-        encoder = EncodingModel(self.config)
+        encoder = EncodingModel_LLM2vec(self.config)
 
         # step is continual task number
         cur_acc, total_acc = [], []
@@ -306,30 +310,30 @@ class Manager(object):
         memory_samples = {}
         data_generation = []
         
-        seen_des = {}
         self.tokenizer = BertTokenizer.from_pretrained(self.config.bert_path)
         for step, (training_data, valid_data, test_data, current_relations, \
             historic_test_data, seen_relations, seen_descriptions) in enumerate(sampler):
             
             # Initialization
             self.moment = Moment(self.config)
-            if self.config.SAM_type == 'current':
-                self.config.SAM = True
-            if self.config.SAM_type == 'full':
-                self.config.SAM = True
+
             # Train current task
             training_data_initialize = []
             for rel in current_relations:
                 training_data_initialize += training_data[rel]
+            if self.config.SAM_type == 'current':
+                self.config.SAM = True
+            if self.config.SAM_type == 'full' :
+                self.config.SAM = True
             self.moment.init_moment(encoder, training_data_initialize, is_memory=False)
             self.train_model(encoder, training_data_initialize)
+            if self.config.SAM_type == 'current':
+                self.config.SAM = False
 
             # Select memory samples
             for rel in current_relations:
                 memory_samples[rel], _ = self.select_memory(encoder, training_data[rel])
 
-            if self.config.SAM_type == 'current':
-                self.config.SAM = False
             # Data gen
             if self.config.gen == 1:
                 gen_text = []
@@ -349,10 +353,11 @@ class Manager(object):
                 memory_data_initialize += data_generation
                 # augment data:
                 data_for_train = training_data_initialize + memory_data_initialize
-                mixup_samples = mixup_data_augmentation(data_for_train)
-                print('Mixup data size: ', len(mixup_samples))
-                self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True) 
-                self.train_model_mixup(encoder, mixup_samples)
+                if config.mixup:
+                    mixup_samples = mixup_data_augmentation_llm(data_for_train)
+                    print('Mixup data size: ', len(mixup_samples))
+                    self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True) 
+                    self.train_model_mixup(encoder, mixup_samples)
                 self.moment.init_moment(encoder, memory_data_initialize, is_memory=True)
                 self.train_model(encoder, memory_data_initialize, is_memory=True)
                 
@@ -369,7 +374,6 @@ class Manager(object):
             for rel in seen_relations:
                 seen_relid.append(self.rel2id[rel])
             
-        
             # Eval current task and history task
             test_data_initialize_cur, test_data_initialize_seen = [], []
             for rel in current_relations:
@@ -400,15 +404,16 @@ if __name__ == '__main__':
     parser.add_argument("--num_k", default=5, type=int)
     parser.add_argument("--num_gen", default=2, type=int)
     parser.add_argument("--mixup", action = 'store_true', default=False)
-    parser.add_argument("--epoch", default=10, type=int)
-    parser.add_argument("--epoch_mem", default=5, type=int)
+    parser.add_argument("--epoch", default=8, type=int)
+    parser.add_argument("--epoch_mem", default=6, type=int)
     parser.add_argument("--mixup_loss_1", default=0.25, type=float)
     parser.add_argument("--mixup_loss_2", default=0.25, type=float)
     parser.add_argument("--SAM", action = 'store_true', default=False)
+    parser.add_argument("--SAM_type", default="", type=str, help="current for SAM in current task or full for SAM in all data")
     parser.add_argument("--rho", default=0.05, type=float)
-    parser.add_argument("--SAM_type", default = "", type = str, help= "current for SAM in current task or full for SAM in all data")
+    
     args = parser.parse_args()
-    config = Config('config.ini')
+    config = Config('config_llm.ini')
     config.task_name = args.task_name
     config.num_k = args.num_k
     config.num_gen = args.num_gen
@@ -418,8 +423,8 @@ if __name__ == '__main__':
     config.mixup_loss_1 = args.mixup_loss_1
     config.mixup_loss_2 = args.mixup_loss_2
     config.SAM = args.SAM
-    config.rho = args.rho
     config.SAM_type = args.SAM_type
+    config.rho = args.rho
 
     # config 
     print('#############params############')
@@ -460,6 +465,7 @@ if __name__ == '__main__':
             config.valid_data = './data/CFRLTacred/CFRLdata_6_100_5_10/valid_0.txt'
             config.test_data = './data/CFRLTacred/CFRLdata_6_100_5_10/test_0.txt'        
 
+    
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
@@ -472,7 +478,7 @@ if __name__ == '__main__':
     if args.mixup: pre += "mixup|"
     if args.SAM: pre += "SAM"
 
-    file_handler = logging.FileHandler(f'CPL-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}-SAM_type_{config.SAM_type}.log')
+    file_handler = logging.FileHandler(f'CPL-LLM-{pre}-logs-task_{config.task_name}-shot_{config.num_k}-numgen_{config.num_gen}-epoch_{config.epoch}_{config.epoch_mem}-lossfactor_{config.mixup_loss_1}_{config.mixup_loss_2}-rho_{config.rho}-SAM_type_{config.SAM_type}-lr_{config.lr}.log')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 
@@ -487,7 +493,7 @@ if __name__ == '__main__':
     logger.info('#############params############')
 
 
-  
+    
     # seed 
     random.seed(config.seed) 
     np.random.seed(config.seed)
@@ -513,6 +519,8 @@ if __name__ == '__main__':
     print('his_acc mean: ', np.around(ave, 4))
     logger.info('----------END')
     logger.info(f'his_acc mean: {np.around(ave, 4)}')
+
+
 
 
 
