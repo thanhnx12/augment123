@@ -187,6 +187,7 @@ class data_sampler_CFRL(object):
         inp = self._tokenize_hardprompt_llm2vec(sample)
         tokenized_sample['input'] = inp
         
+        
         tokenized_sample['relation'] = sample['relation']
         tokenized_sample['index'] = sample['index']
 

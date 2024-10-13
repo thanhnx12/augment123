@@ -330,7 +330,7 @@ class Manager(object):
                 mixup_samples = mixup_data_augmentation(data_for_train)
                 print('Mixup data size: ', len(mixup_samples))
                 self.moment.init_moment_mixup(encoder, mixup_samples, is_memory=True) 
-                self.train_model_mixup(encoder, mixup_samples, seen_des)
+                self.train_model_mixup(encoder, mixup_samples)
                 self.moment.init_moment(encoder, memory_data_initialize, is_memory=True) 
                 self.train_model(encoder, memory_data_initialize, is_memory=True)
 

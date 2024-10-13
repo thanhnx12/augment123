@@ -959,6 +959,9 @@ class NegativeCosSimLoss(nn.Module):
         # Normalize the embeddings to ensure they are unit vectors
         batch1 = F.normalize(ebd1, p=2, dim=-1)
         batch2 = F.normalize(ebd2, p=2, dim=-1)
+        # add noise to the embeddings
+        batch1 = batch1 + torch.randn_like(batch1) * 1e-5
+        batch2 = batch2 + torch.randn_like(batch2) * 1e-5
         
         # Compute the cosine similarity for each corresponding pair in the batches
         cos_sim = torch.sum(batch1 * batch2, dim=-1) / self.temperature
@@ -967,5 +970,5 @@ class NegativeCosSimLoss(nn.Module):
         # loss = - torch.log(1 + exp(cos_sim))
         # loss = - torch.log(1 + torch.exp(cos_sim)).mean()
         exp_sim = torch.exp(cos_sim)
-        loss = - torch.log((1 + exp_sim)).mean()
+        loss = torch.log((1 + exp_sim)).mean()
         return loss
